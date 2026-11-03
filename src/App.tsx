@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { EveryoneOutSheet } from './components/EveryoneOutSheet'
 import { HistoryScreen } from './components/HistoryScreen'
+import { ImportDaySheet } from './components/ImportDaySheet'
 import { MasterScreen } from './components/MasterScreen'
 import { SignInSheet } from './components/SignInSheet'
 import { TodayScreen } from './components/TodayScreen'
@@ -48,12 +49,13 @@ export function App() {
   const [signingIn, setSigningIn] = useState(false)
   const [openId, setOpenId] = useState<number | null>(null)
   const [everyoneOut, setEveryoneOut] = useState<number | null>(null)
+  const [importing, setImporting] = useState(false)
 
   return (
     <div className="app">
       <InstallHint />
       {tab === 'today' && (
-        <TodayScreen day={day} onOpen={(v) => setOpenId(v.id)} onEveryoneOut={setEveryoneOut} />
+        <TodayScreen day={day} onOpen={(v) => setOpenId(v.id)} onEveryoneOut={setEveryoneOut} onImport={() => setImporting(true)} />
       )}
       {tab === 'master' && <MasterScreen />}
       {tab === 'history' && <HistoryScreen />}
@@ -78,6 +80,7 @@ export function App() {
         />
       )}
       {openId !== null && <VisitSheet id={openId} onClose={() => setOpenId(null)} />}
+      {importing && <ImportDaySheet today={day} onClose={() => setImporting(false)} />}
       {everyoneOut !== null && <EveryoneOutSheet day={day} count={everyoneOut} onClose={() => setEveryoneOut(null)} />}
     </div>
   )

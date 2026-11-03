@@ -2,11 +2,11 @@ import type { Car, CarDetails, RecordsDb } from './db'
 import { db as defaultDb } from './db'
 import { normaliseReg } from './format'
 
-type Field = 'reg' | 'firstName' | 'lastName' | 'fullName' | 'company' | 'toSee'
+export type Field = 'reg' | 'firstName' | 'lastName' | 'fullName' | 'company' | 'toSee'
 
 // Header text is compared lower-case with everything but letters and digits
 // removed, so "First Name", "first_name" and "FIRSTNAME" all match.
-const HEADERS: Record<Field, string[]> = {
+export const HEADERS: Record<Field, string[]> = {
   reg: ['registration', 'reg', 'regno', 'registrationnumber', 'carreg', 'carregistration', 'vehiclereg', 'vehicleregistration', 'vrm', 'numberplate', 'plate'],
   firstName: ['firstname', 'first', 'forename', 'givenname', 'firstnameoftheowner', 'ownerfirstname'],
   lastName: ['lastname', 'last', 'surname', 'secondname', 'familyname', 'lastnameoftheowner', 'ownerlastname', 'ownersurname'],
@@ -15,10 +15,10 @@ const HEADERS: Record<Field, string[]> = {
   toSee: ['tosee', 'companytosee', 'visiting', 'seeing', 'host', 'companytheywanttosee', 'companyvisiting'],
 }
 
-const key = (v: unknown) => String(v ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
-const text = (v: unknown) => (v === null || v === undefined ? '' : String(v).trim())
+export const key = (v: unknown) => String(v ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
+export const text = (v: unknown) => (v === null || v === undefined ? '' : String(v).trim())
 /** "//" in the sheet means "not known yet"; it is stored as empty and prints as "//". */
-const detail = (v: unknown) => (text(v) === '//' ? '' : text(v))
+export const detail = (v: unknown) => (text(v) === '//' ? '' : text(v))
 
 /**
  * A registration is 2–8 letters and digits with at least one letter. This
@@ -40,7 +40,7 @@ export interface MasterParseResult {
   duplicates: string[]
 }
 
-function matchHeader(row: unknown[]): Partial<Record<Field, number>> {
+export function matchHeader(row: unknown[]): Partial<Record<Field, number>> {
   const found: Partial<Record<Field, number>> = {}
   row.forEach((cell, i) => {
     const k = key(cell)
