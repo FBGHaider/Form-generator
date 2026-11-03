@@ -53,3 +53,8 @@ export async function masterToXlsx(cars: Car[]): Promise<Blob> {
     stickyRowsCount: 1,
   }).toBlob()
 }
+
+/** Every sheet in an .xlsx file, as rows of cells. */
+export async function readWorkbook(file: File): Promise<{ sheet: string; data: unknown[][] }[]> {
+  return (await readXlsxFile(file)).map((s) => ({ sheet: s.sheet, data: s.data as unknown[][] }))
+}

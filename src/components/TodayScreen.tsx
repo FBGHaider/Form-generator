@@ -32,10 +32,11 @@ function Row({ v, onOpen }: { v: Visit; onOpen: (v: Visit) => void }) {
   )
 }
 
-export function TodayScreen({ day, onOpen, onEveryoneOut }: {
+export function TodayScreen({ day, onOpen, onEveryoneOut, onImport }: {
   day: string
   onOpen: (v: Visit) => void
   onEveryoneOut: (count: number) => void
+  onImport: () => void
 }) {
   const notify = useToast()
   const [q, setQ] = useState('')
@@ -63,8 +64,12 @@ export function TodayScreen({ day, onOpen, onEveryoneOut }: {
           <h1>Today</h1>
           <div className="muted">{longDay(day)} · {visits.length} on the sheet</div>
         </div>
-        <button type="button" className="btn" onClick={exportPdf} disabled={visits.length === 0}>Export PDF</button>
       </header>
+
+      <div className="button-row">
+        <button type="button" className="btn" onClick={onImport}>Import sheet</button>
+        <button type="button" className="btn" onClick={exportPdf} disabled={visits.length === 0}>Export PDF</button>
+      </div>
 
       <input
         className="search"

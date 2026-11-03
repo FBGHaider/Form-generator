@@ -131,6 +131,15 @@ section { margin-top: 18px; }
 .known-name { font-size: 20px; font-weight: 700; }
 .known-meta { color: var(--muted); margin: 2px 0 10px; }
 .plain { padding-left: 18px; color: var(--muted); }
+.or { text-align: center; color: var(--muted); margin: 16px 0 8px; }
+.paste, .field select {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--card); color: var(--text); font: inherit; font-size: 16px;
+}
+.paste { font-family: ui-monospace, Menlo, monospace; font-size: 16px; resize: vertical; }
+.list.compact .day-row { padding: 8px 12px; gap: 8px; }
+.list.compact .plate { min-width: 84px; margin-right: 6px; font-size: 14px; }
+.screen .button-row { margin-bottom: 12px; }
 
 .install-hint { display: flex; gap: 10px; align-items: flex-start; background: var(--warn-bg); padding: calc(10px + env(safe-area-inset-top)) 16px 10px; font-size: 14px; }
 
