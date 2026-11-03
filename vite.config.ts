@@ -7,8 +7,14 @@ import { VitePWA } from 'vite-plugin-pwa'
 // capitalisation must not matter. Override with BASE_PATH if ever needed.
 const base = process.env.BASE_PATH ?? './'
 
+// Shown in the app so it is easy to tell which version a phone is running.
+const builtAt = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Europe/London', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hour12: false,
+}).format(new Date())
+
 export default defineConfig({
   base,
+  define: { __APP_VERSION__: JSON.stringify(process.env.APP_VERSION ?? builtAt) },
   plugins: [
     react(),
     VitePWA({
