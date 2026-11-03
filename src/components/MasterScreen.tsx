@@ -3,18 +3,15 @@ import { useRef, useState } from 'react'
 import { TO_SEE_OPTIONS } from '../config'
 import { db, type Car, type CarDetails } from '../lib/db'
 import { dayKey, displayName, fileDay, normaliseReg, orUnknown } from '../lib/format'
-import { importCars, type MasterParseResult } from '../lib/master'
+import type { MasterFileResult } from '../lib/excel'
+import { importCars } from '../lib/master'
 import { deleteCar, saveCar } from '../lib/records'
 import { shareFile } from '../lib/share'
 import { DetailsFields } from './DetailsFields'
 import { Sheet } from './Sheet'
 import { errorText, useToast } from './Toast'
 
-const LABELS: Record<string, string> = {
-  reg: 'Registration', firstName: 'First name', lastName: 'Last name', fullName: 'Name', company: 'Company', toSee: 'To see',
-}
-
-function ImportSheet({ result, onClose }: { result: MasterParseResult & { sheet: string }; onClose: () => void }) {
+function ImportSheet({ result, onClose }: { result: MasterFileResult; onClose: () => void }) {
   const notify = useToast()
   const go = async () => {
     try {
@@ -27,14 +24,16 @@ function ImportSheet({ result, onClose }: { result: MasterParseResult & { sheet:
   }
   return (
     <Sheet title="Import master list" onClose={onClose}>
-      <p>Found <strong>{result.cars.length}</strong> cars on sheet “{result.sheet}”.</p>
-      <ul className="plain">
-        {Object.entries(result.columns).map(([k, v]) => <li key={k}>{LABELS[k]} ← “{v}”</li>)}
-      </ul>
-      {result.skipped > 0 && <p className="hint">{result.skipped} rows had no registration and will be left out.</p>}
-      {result.duplicates.length > 0 && (
-        <p className="hint">Listed more than once (the last row is used): {result.duplicates.join(', ')}</p>
+      <p>
+        Found <strong>{result.cars.length}</strong> cars across {result.sheets.length}{' '}
+        {result.sheets.length === 1 ? 'sheet' : 'sheets'}
+        {result.sheets.length > 1 && <> ({result.sheets[0]} to {result.sheets[result.sheets.length - 1]})</>}.
+      </p>
+      <p className="hint">Where a car's details differ between days, the newest day is used.</p>
+      {result.ignored.length > 0 && (
+        <p className="hint">Skipped sheets with no Registration column: {result.ignored.join(', ')}</p>
       )}
+      {result.skipped > 0 && <p className="hint">{result.skipped} rows had no proper registration and were left out.</p>}
       <p className="hint">Cars already in the app are updated from the file. Cars you added on the phone are kept.</p>
       <button type="button" className="btn primary block" onClick={go} disabled={result.cars.length === 0}>
         Import {result.cars.length} cars
@@ -89,7 +88,7 @@ export function MasterScreen() {
   const notify = useToast()
   const file = useRef<HTMLInputElement>(null)
   const [q, setQ] = useState('')
-  const [importing, setImporting] = useState<(MasterParseResult & { sheet: string }) | null>(null)
+  const [importing, setImporting] = useState<MasterFileResult | null>(null)
   const [editing, setEditing] = useState<Car | null | undefined>(undefined) // null = new car
   const cars = useLiveQuery(() => db.cars.orderBy('reg').toArray(), []) ?? []
 

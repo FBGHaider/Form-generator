@@ -1,23 +1,43 @@
 import readXlsxFile from 'read-excel-file/browser'
 import writeXlsxFile from 'write-excel-file/browser'
-import { masterRows, parseMasterRows, type MasterParseResult } from './master'
+import { masterRows, mergeSheets, parseMasterRows, type MasterParseResult } from './master'
 import type { Car } from './db'
 
+export interface MasterFileResult {
+  cars: Omit<Car, 'updatedAt'>[]
+  /** Names of the sheets that were read, oldest first. */
+  sheets: string[]
+  /** Sheets with no "Registration" heading, left out. */
+  ignored: string[]
+  /** Non-empty rows with no proper registration, across all sheets. */
+  skipped: number
+}
+
 /**
- * Read a master list from an .xlsx file. If the workbook has several sheets,
- * the first one with a "Registration" heading is used.
+ * Read a master list from an .xlsx file. Every sheet with a "Registration"
+ * heading is read — the workbook is one sheet per day — and they are combined,
+ * newest sheet winning, so cars seen on any day are all in the master list.
  */
-export async function readMasterFile(file: File): Promise<MasterParseResult & { sheet: string }> {
-  const sheets = await readXlsxFile(file)
-  let firstError: unknown
-  for (const s of sheets) {
+export async function readMasterFile(file: File): Promise<MasterFileResult> {
+  const all = await readXlsxFile(file)
+  const parsed: MasterParseResult[] = []
+  const sheets: string[] = []
+  const ignored: string[] = []
+  for (const s of all) {
     try {
-      return { ...parseMasterRows(s.data as unknown[][]), sheet: s.sheet }
-    } catch (e) {
-      firstError ??= e
+      parsed.push(parseMasterRows(s.data as unknown[][]))
+      sheets.push(s.sheet)
+    } catch {
+      ignored.push(s.sheet)
     }
   }
-  throw firstError ?? new Error('The file has no sheets.')
+  if (parsed.length === 0) throw new Error('No sheet in this file has a "Registration" heading.')
+  return {
+    cars: mergeSheets(parsed.map((p) => p.cars)),
+    sheets,
+    ignored,
+    skipped: parsed.reduce((n, p) => n + p.skipped, 0),
+  }
 }
 
 export async function masterToXlsx(cars: Car[]): Promise<Blob> {

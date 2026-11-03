@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { RecordsDb } from './db'
-import { importCars, masterRows, parseMasterRows } from './master'
+import { importCars, looksLikeReg, masterRows, mergeSheets, parseMasterRows } from './master'
 
 describe('master list import', () => {
   it('reads the columns described for the master sheet', () => {
@@ -13,7 +13,7 @@ describe('master list import', () => {
     const r = parseMasterRows(rows)
     expect(r.cars).toEqual([
       { reg: 'DN75WAE', firstName: 'Tom', lastName: '', company: 'Spencer', toSee: 'Spencer' },
-      { reg: 'LB23YJN', firstName: '//', lastName: '', company: '//', toSee: 'Spencer' },
+      { reg: 'LB23YJN', firstName: '', lastName: '', company: '', toSee: 'Spencer' },
     ])
     expect(r.skipped).toBe(0)
     expect(r.columns.toSee).toBe('Company to see')
@@ -30,6 +30,48 @@ describe('master list import', () => {
     expect(r.skipped).toBe(1)
     expect(r.duplicates).toEqual(['AA11AAA'])
     expect(r.cars).toEqual([{ reg: 'AA11AAA', firstName: 'Two', lastName: '', company: '', toSee: '' }])
+  })
+
+  it('reads a daily sheet: title rows, the total row is not a car', () => {
+    const rows = [
+      ['Date: 03 November 2026', null, null, null, null, null, null],
+      ['Bannold Drove Crossing - Vehicle Records', null, null, null, null, null, null],
+      ['First Name', 'Last name', 'Company', 'To see', 'Time in', 'Time out', 'Registration'],
+      ['Tom', 'Ankrett', 'Spencer', 'Spencer', new Date(0), null, 'DN75WAE'],
+      ['Paul', null, 'Ace plant', 'Spencer', null, null, 'P25 ACE'],
+      ['Total people on site today', null, null, null, null, null, 37],
+    ]
+    const r = parseMasterRows(rows)
+    expect(r.cars.map((c) => c.reg)).toEqual(['DN75WAE', 'P25ACE'])
+    expect(r.skipped).toBe(0)
+  })
+
+  it('only accepts things shaped like registrations', () => {
+    for (const ok of ['DN75WAE', 'M9UTV', 'WI8JRG', 'P25ACE', 'K23ADH', 'GIJPN']) expect(looksLikeReg(ok)).toBe(true)
+    for (const bad of ['37', '', 'ABCDEFGH12']) expect(looksLikeReg(bad)).toBe(false)
+  })
+
+  it('combines daily sheets, newest filled-in detail wins', () => {
+    const oct = parseMasterRows([
+      ['Name', 'Company', 'To see', 'Registration'],
+      ['Tom brown', 'Spencer', 'Spencer', 'FN24OET'],
+      ['Thomas', 'GCP', 'Spencer', 'K23ADH'],
+      ['Old', 'Gone', 'Spencer', 'OLD11AA'],
+    ]).cars
+    const nov2 = parseMasterRows([
+      ['First Name', 'Last name', 'Company', 'To see', 'Registration'],
+      ['Tom', 'Brown', 'Spencer', 'Spencer', 'FN24OET'],
+      ['Thomas', 'Fitzpatrick', 'GCP', 'Spencer', 'K23ADH'],
+    ]).cars
+    const nov3 = parseMasterRows([
+      ['First Name', 'Last name', 'Company', 'To see', 'Registration'],
+      ['Thomas', null, 'GCP', 'Spencer', 'K23ADH'],
+    ]).cars
+    const merged = mergeSheets([oct, nov2, nov3])
+    expect(merged.map((c) => c.reg)).toEqual(['FN24OET', 'K23ADH', 'OLD11AA'])
+    expect(merged.find((c) => c.reg === 'FN24OET')).toMatchObject({ firstName: 'Tom', lastName: 'Brown' })
+    // Blank last name on 3 Nov does not wipe out "Fitzpatrick" from 2 Nov.
+    expect(merged.find((c) => c.reg === 'K23ADH')).toMatchObject({ firstName: 'Thomas', lastName: 'Fitzpatrick' })
   })
 
   it('explains when there is no registration column', () => {

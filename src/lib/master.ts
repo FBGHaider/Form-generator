@@ -17,6 +17,18 @@ const HEADERS: Record<Field, string[]> = {
 
 const key = (v: unknown) => String(v ?? '').toLowerCase().replace(/[^a-z0-9]/g, '')
 const text = (v: unknown) => (v === null || v === undefined ? '' : String(v).trim())
+/** "//" in the sheet means "not known yet"; it is stored as empty and prints as "//". */
+const detail = (v: unknown) => (text(v) === '//' ? '' : text(v))
+
+/**
+ * A registration is 2–8 letters and digits with at least one letter. This
+ * keeps out things in the Registration column that are not cars, like the
+ * "37" on the "Total people on site today" row, while still allowing private
+ * plates such as "GIJPN".
+ */
+export function looksLikeReg(reg: string): boolean {
+  return /^[A-Z0-9]{2,8}$/.test(reg) && /[A-Z]/.test(reg)
+}
 
 export interface MasterParseResult {
   cars: Omit<Car, 'updatedAt'>[]
@@ -60,10 +72,11 @@ export function parseMasterRows(rows: unknown[][]): MasterParseResult {
   let skipped = 0
 
   for (const row of rows.slice(headerIndex + 1)) {
-    const at = (f: Field) => (cols[f] === undefined ? '' : text(row[cols[f]!]))
-    const reg = normaliseReg(at('reg'))
-    if (!reg) {
-      if (row.some((c) => text(c) !== '')) skipped++
+    const at = (f: Field) => (cols[f] === undefined ? '' : detail(row[cols[f]!]))
+    const reg = normaliseReg(text(cols.reg === undefined ? '' : row[cols.reg]))
+    const isTotal = /^total/i.test(text(row[0]))
+    if (!looksLikeReg(reg)) {
+      if (!isTotal && row.some((c) => text(c) !== '')) skipped++
       continue
     }
     let firstName = at('firstName')
@@ -79,6 +92,30 @@ export function parseMasterRows(rows: unknown[][]): MasterParseResult {
   }
 
   return { cars: [...byReg.values()], columns, skipped, duplicates: [...duplicates] }
+}
+
+type ImportedCar = Omit<Car, 'updatedAt'>
+const DETAILS = ['firstName', 'lastName', 'company', 'toSee'] as const
+
+/**
+ * Combine several sheets into one master list. Sheets are given oldest first
+ * (workbook order). For each car, every detail comes from the newest sheet
+ * that has it filled in, so a name written in properly on a later day wins,
+ * and a detail left blank on a later day does not wipe out an earlier one.
+ */
+export function mergeSheets(sheets: ImportedCar[][]): ImportedCar[] {
+  const byReg = new Map<string, ImportedCar>()
+  for (const cars of sheets) {
+    for (const car of cars) {
+      const prev = byReg.get(car.reg)
+      if (!prev) {
+        byReg.set(car.reg, { ...car })
+        continue
+      }
+      for (const k of DETAILS) if (car[k] !== '') prev[k] = car[k]
+    }
+  }
+  return [...byReg.values()].sort((a, b) => a.reg.localeCompare(b.reg))
 }
 
 /**
