@@ -6,6 +6,7 @@ import { visitsFor } from '../lib/records'
 import { lastSentDay, sendEndOfDay } from '../lib/endOfDay'
 import { shareFile } from '../lib/share'
 import { Logo } from './Brand'
+import { Clearable } from './Clearable'
 import { errorText, useToast } from './Toast'
 
 /** A plate matches on any part ("WAE"); a name or company on any part of it. */
@@ -120,17 +121,19 @@ export function TodayScreen({ day, today, onDay, onOpen, onSignIn, onSignOut, on
         <button type="button" className="btn out" onClick={onSignOut} disabled={allOnSite === 0}>Sign out</button>
       </div>
 
-      <input
-        className="search"
-        type="search"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Search car or name"
-        autoCapitalize="characters"
-        autoComplete="off"
-        autoCorrect="off"
-        spellCheck={false}
-      />
+      <Clearable value={q} onClear={() => setQ('')} className="screen-search">
+        <input
+          className="search"
+          type="search"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search car or name"
+          autoCapitalize="characters"
+          autoComplete="off"
+          autoCorrect="off"
+          spellCheck={false}
+        />
+      </Clearable>
 
       <div className="actions">
         <button type="button" className="btn" onClick={onImport}>Import sheet</button>
