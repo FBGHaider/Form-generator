@@ -149,3 +149,15 @@ section { margin-top: 18px; }
   background: #15181d; color: #fff; font-weight: 600; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
 .toast.error { background: var(--danger); }
+
+.missing-name {
+  margin-top: 12px; padding: 12px; border: 2px solid var(--danger); border-radius: var(--radius);
+  background: color-mix(in srgb, var(--danger) 8%, transparent); display: flex; flex-direction: column; gap: 10px;
+}
+.missing-name-text { color: var(--danger); font-weight: 600; }
+.missing-name-form { display: flex; flex-direction: column; gap: 8px; }
+.missing-name-form input {
+  width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--card); color: var(--text);
+}
+.btn.danger-solid { background: var(--danger); border-color: var(--danger); color: #fff; align-self: flex-start; }
