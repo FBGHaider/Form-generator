@@ -127,7 +127,7 @@ export function HistoryScreen({ onOpenDay }: { onOpenDay: (day: string) => void 
         <div>
           <h1>Past days</h1>
           <div className="muted">Every day is kept on this phone</div>
-          <div className="muted brand-line"><Logo size={20} /> Gatehouse · version {__APP_VERSION__}</div>
+          <div className="muted brand-line"><Logo size={20} /> Alert Gatehouse · version {__APP_VERSION__}</div>
         </div>
       </header>
 

@@ -40,7 +40,7 @@ function InstallHint() {
     <div className="install-hint">
       <Logo size={36} />
       <span>
-        Add Gatehouse to your Home Screen so it works with no signal and your data is kept safe:
+        Add Alert Gatehouse to your Home Screen so it works with no signal and your data is kept safe:
         tap <strong>Share</strong> then <strong>Add to Home Screen</strong>.
       </span>
       <button type="button" className="link" onClick={() => setHidden(true)}>OK</button>
