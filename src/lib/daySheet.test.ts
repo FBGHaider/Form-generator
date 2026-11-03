@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { RecordsDb } from './db'
-import { cellTime, findDay, importDaySheet, parseDaySheet, parsePastedRows } from './daySheet'
+import { cellTime, findDay, importDaySheet, parseDaySheet, parsePastedRows, readDayTabs } from './daySheet'
 import { signIn, visitsFor } from './records'
 
 const DAY = '2026-11-03'
@@ -113,5 +113,34 @@ describe('importing a day sheet', () => {
     const r = await importDaySheet(DAY, parseDaySheet(sheet).entries, db)
     expect(r.onSiteAlready).toEqual(['BB22BBB'])
     expect((await visitsFor(DAY, db)).filter((v) => v.reg === 'BB22BBB')).toHaveLength(1)
+  })
+
+  it('a past day goes in without changing the master list', async () => {
+    await db.cars.put({ reg: 'BB22BBB', firstName: 'Robert', lastName: 'Baker', company: 'Mick George', toSee: 'Spencer', updatedAt: 1 })
+    const r = await importDaySheet('2026-10-20', parseDaySheet(sheet).entries, db, { updateMaster: false })
+    expect(r.added).toBe(4)
+    expect(r.newCars).toEqual([])
+    expect(await db.cars.count()).toBe(1)
+    // the master list's name is still used on the day where it has one
+    expect((await visitsFor('2026-10-20', db)).find((v) => v.reg === 'BB22BBB')).toMatchObject({ firstName: 'Robert' })
+  })
+})
+
+describe('reading a whole workbook of days', () => {
+  const tab = (date: string, rows: unknown[][]) => [[`Date: ${date}`], ['Name', 'Company', 'To see', 'Time in', 'Time out', 'Registration'], ...rows]
+  it('lists each day tab with its date, the tab name winning over a stale Date line', () => {
+    const book = [
+      { sheet: '28 Oct 2026', data: tab('28 Oct 2026', [['Tom', 'Spencer', 'Spencer', '7:00', '17:00', 'DN75WAE'], ['Ann', 'GCP', 'Spencer', null, null, 'AA11AAA']]) },
+      { sheet: '30 Oct 2026', data: tab('29 Oct 2026', [['Tom', 'Spencer', 'Spencer', '7:00', null, 'DN75WAE']]) },
+      { sheet: 'Notes', data: [['just some notes']] },
+      { sheet: 'Sheet1', data: tab('5 Oct 2026', [['Tom', 'Spencer', 'Spencer', '7:05', null, 'DN75WAE']]) },
+    ]
+    const tabs = readDayTabs(book)
+    expect(tabs.map((t) => [t.sheet, t.day, t.signedIn])).toEqual([
+      ['28 Oct 2026', '2026-10-28', 1],
+      ['30 Oct 2026', '2026-10-30', 1],
+      ['Sheet1', '2026-10-05', 1],
+    ])
+    expect(tabs[1].dateNote).toBe('The tab is named 30 Oct 2026 but its Date line says 29 Oct 2026; using the tab name.')
   })
 })

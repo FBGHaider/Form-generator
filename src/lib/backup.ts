@@ -94,9 +94,9 @@ export async function restoreBackup(backup: BackupContents, db: RecordsDb = defa
   })
   let signInsAdded = 0
   for (const [day, entries] of backup.days) {
-    const r = await importDaySheet(day, entries, db)
+    // The backup's Master sheet is the master list; sign-ins do not add to it.
+    const r = await importDaySheet(day, entries, db, { updateMaster: false })
     signInsAdded += r.added
-    carsAdded += r.newCars.length
   }
   return { carsAdded, days: backup.days.size, signInsAdded }
 }
