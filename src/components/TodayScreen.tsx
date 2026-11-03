@@ -1,11 +1,18 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { db, type Visit } from '../lib/db'
-import { displayName, longDay, orUnknown, printTime, shiftDay, weekdayDay } from '../lib/format'
+import { displayName, longDay, normaliseReg, orUnknown, printTime, shiftDay, weekdayDay } from '../lib/format'
 import { visitsFor } from '../lib/records'
 import { lastSentDay, sendEndOfDay } from '../lib/endOfDay'
 import { shareFile } from '../lib/share'
 import { errorText, useToast } from './Toast'
+
+/** A plate matches on any part ("WAE"); a name or company on any part of it. */
+function matches(v: Visit, q: string) {
+  const reg = normaliseReg(q)
+  if (reg && v.reg.includes(reg)) return true
+  return `${v.firstName} ${v.lastName} ${v.company}`.toLowerCase().includes(q.trim().toLowerCase())
+}
 
 function Row({ v, onOpen }: { v: Visit; onOpen: (v: Visit) => void }) {
   return (
@@ -30,8 +37,10 @@ function Row({ v, onOpen }: { v: Visit; onOpen: (v: Visit) => void }) {
  * date box. Every feature works the same on any day; the end-of-day send is
  * for today only.
  */
-export function TodayScreen({ day, today, onDay, onOpen, onSignIn, onSignOut, onEveryoneOut, onImport }: {
+export function TodayScreen({ day, today, onDay, onOpen, onSignIn, onSignOut, onEveryoneOut, onImport, clearSearch }: {
   day: string
+  /** Changes whenever the search box should be emptied (after a car was changed). */
+  clearSearch: number
   today: string
   onDay: (day: string) => void
   onOpen: (v: Visit) => void
@@ -44,8 +53,16 @@ export function TodayScreen({ day, today, onDay, onOpen, onSignIn, onSignOut, on
   const [showOut, setShowOut] = useState(false)
   const visits = useLiveQuery(() => db.visits.where('day').equals(day).sortBy('createdAt'), [day]) ?? []
 
-  const onSite = visits.filter((v) => v.timeOut === '')
-  const out = visits.filter((v) => v.timeOut !== '')
+  // Search this day's list by plate or name; empties after a car is changed,
+  // or when moving to another day.
+  const [q, setQ] = useState('')
+  useEffect(() => setQ(''), [clearSearch, day])
+  const searching = q.trim() !== ''
+  const shown = searching ? visits.filter((v) => matches(v, q)) : visits
+
+  const onSite = shown.filter((v) => v.timeOut === '')
+  const out = shown.filter((v) => v.timeOut !== '')
+  const allOnSite = visits.filter((v) => v.timeOut === '').length
 
   // After 4pm, remind until today's list has been sent.
   const [sentDay, setSentDay] = useState(lastSentDay())
@@ -95,8 +112,20 @@ export function TodayScreen({ day, today, onDay, onOpen, onSignIn, onSignOut, on
 
       <div className="in-out">
         <button type="button" className="btn primary" onClick={onSignIn}>+ Sign in</button>
-        <button type="button" className="btn out" onClick={onSignOut} disabled={onSite.length === 0}>Sign out</button>
+        <button type="button" className="btn out" onClick={onSignOut} disabled={allOnSite === 0}>Sign out</button>
       </div>
+
+      <input
+        className="search"
+        type="search"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Search car or name to change it"
+        autoCapitalize="characters"
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+      />
 
       <div className="button-row">
         <button type="button" className="btn" onClick={onImport}>Import sheet</button>
@@ -111,11 +140,13 @@ export function TodayScreen({ day, today, onDay, onOpen, onSignIn, onSignOut, on
         </div>
       )}
 
-      {(isToday || onSite.length > 0) && <section>
+      {searching && shown.length === 0 && <p className="empty">No car on this day matches “{q.trim()}”.</p>}
+
+      {(isToday || onSite.length > 0) && !(searching && onSite.length === 0) && <section>
         <div className="section-head">
           <h2>{isToday ? 'On site now' : 'Still signed in'} ({onSite.length})</h2>
           {onSite.length > 0 && (
-            <button type="button" className="link" onClick={() => onEveryoneOut(onSite.length)}>Everyone out</button>
+            <button type="button" className="link" onClick={() => onEveryoneOut(allOnSite)}>Everyone out</button>
           )}
         </div>
         {onSite.length === 0 ? (
@@ -129,9 +160,9 @@ export function TodayScreen({ day, today, onDay, onOpen, onSignIn, onSignOut, on
         <section>
           <div className="section-head">
             <h2>Signed out ({out.length})</h2>
-            {isToday && <button type="button" className="link" onClick={() => setShowOut(!showOut)}>{showOut ? 'Hide' : 'Show'}</button>}
+            {isToday && !searching && <button type="button" className="link" onClick={() => setShowOut(!showOut)}>{showOut ? 'Hide' : 'Show'}</button>}
           </div>
-          {(showOut || !isToday) && <ul className="list">{out.map((v) => <Row key={v.id} v={v} onOpen={onOpen} />)}</ul>}
+          {(showOut || !isToday || searching) && <ul className="list">{out.map((v) => <Row key={v.id} v={v} onOpen={onOpen} />)}</ul>}
         </section>
       )}
     </main>

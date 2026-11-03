@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { shiftDay, weekdayDay, weekStart, dayKey, displayName, fileDay, isValidTime, longDay, normaliseReg, orUnknown, printTime, timeNow } from './format'
+import { groupByWeek, shiftDay, weekdayDay, weekLabel, weekStart, dayKey, displayName, fileDay, isValidTime, longDay, normaliseReg, orUnknown, printTime, timeNow } from './format'
 
 describe('format', () => {
   it('normalises registrations', () => {
@@ -54,5 +54,16 @@ describe('format', () => {
     expect(shiftDay('2026-11-01', -1)).toBe('2026-10-31')
     expect(shiftDay('2026-10-31', 1)).toBe('2026-11-01')
     expect(weekdayDay('2026-11-03')).toBe('Tuesday 3 Nov 2026')
+  })
+
+  it('labels and groups weeks, Monday to Sunday', () => {
+    expect(weekLabel('2026-10-26')).toBe('26 Oct – 1 Nov 2026')
+    expect(weekLabel('2026-12-28')).toBe('28 Dec 2026 – 3 Jan 2027')
+    const days = ['2026-11-03', '2026-11-02', '2026-10-30', '2026-10-26', '2026-10-23'].map((day) => ({ day }))
+    expect(groupByWeek(days).map((g) => [g.monday, g.days.map((d) => d.day)])).toEqual([
+      ['2026-11-02', ['2026-11-03', '2026-11-02']],
+      ['2026-10-26', ['2026-10-30', '2026-10-26']],
+      ['2026-10-19', ['2026-10-23']],
+    ])
   })
 })
