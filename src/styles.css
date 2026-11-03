@@ -177,3 +177,13 @@ section { margin-top: 18px; }
 .link:disabled { opacity: 0.4; }
 .tab-name { display: block; font-size: 13px; }
 .tab-note { display: block; font-size: 13px; color: var(--danger); }
+
+.day-nav { display: grid; grid-template-columns: 52px 1fr 52px; gap: 8px; margin-bottom: 10px; }
+.day-nav .btn { font-size: 24px; padding: 6px 0; }
+.day-nav input {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--card); color: var(--text); font: inherit; font-size: 17px; text-align: center;
+}
+.past-day { flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.share-bar-buttons { display: flex; gap: 8px; }
+.day-row .btn.small + .btn.small { margin-left: 6px; }

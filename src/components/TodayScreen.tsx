@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { db, type Visit } from '../lib/db'
-import { displayName, longDay, orUnknown, printTime } from '../lib/format'
+import { displayName, longDay, orUnknown, printTime, shiftDay, weekdayDay } from '../lib/format'
 import { visitsFor } from '../lib/records'
 import { lastSentDay, sendEndOfDay } from '../lib/endOfDay'
 import { shareFile } from '../lib/share'
@@ -25,8 +25,15 @@ function Row({ v, onOpen }: { v: Visit; onOpen: (v: Visit) => void }) {
   )
 }
 
-export function TodayScreen({ day, onOpen, onSignIn, onSignOut, onEveryoneOut, onImport }: {
+/**
+ * One day's sheet — today's, or any earlier day picked with the arrows or the
+ * date box. Every feature works the same on any day; the end-of-day send is
+ * for today only.
+ */
+export function TodayScreen({ day, today, onDay, onOpen, onSignIn, onSignOut, onEveryoneOut, onImport }: {
   day: string
+  today: string
+  onDay: (day: string) => void
   onOpen: (v: Visit) => void
   onSignIn: () => void
   onSignOut: () => void
@@ -42,7 +49,8 @@ export function TodayScreen({ day, onOpen, onSignIn, onSignOut, onEveryoneOut, o
 
   // After 4pm, remind until today's list has been sent.
   const [sentDay, setSentDay] = useState(lastSentDay())
-  const remind = visits.length > 0 && sentDay !== day && new Date().getHours() >= 16
+  const isToday = day === today
+  const remind = isToday && visits.length > 0 && sentDay !== day && new Date().getHours() >= 16
 
   const sendToday = async () => {
     try {
@@ -67,10 +75,23 @@ export function TodayScreen({ day, onOpen, onSignIn, onSignOut, onEveryoneOut, o
     <main className="screen">
       <header className="screen-header">
         <div>
-          <h1>Today</h1>
-          <div className="muted">{longDay(day)} · {visits.length} on the sheet</div>
+          <h1>{isToday ? 'Today' : weekdayDay(day)}</h1>
+          <div className="muted">{isToday ? `${longDay(day)} · ` : ''}{visits.length} on the sheet</div>
         </div>
       </header>
+
+      <div className="day-nav">
+        <button type="button" className="btn" aria-label="Day before" onClick={() => onDay(shiftDay(day, -1))}>‹</button>
+        <input type="date" value={day} max={today} aria-label="Pick a day"
+          onChange={(e) => e.target.value && onDay(e.target.value > today ? today : e.target.value)} />
+        <button type="button" className="btn" aria-label="Day after" disabled={isToday} onClick={() => onDay(shiftDay(day, 1))}>›</button>
+      </div>
+      {!isToday && (
+        <div className="notice warn past-day">
+          <span>You are looking at <strong>{longDay(day)}</strong>, not today. Changes are saved to that day.</span>
+          <button type="button" className="btn primary" onClick={() => onDay(today)}>Back to today</button>
+        </div>
+      )}
 
       <div className="in-out">
         <button type="button" className="btn primary" onClick={onSignIn}>+ Sign in</button>
@@ -80,7 +101,7 @@ export function TodayScreen({ day, onOpen, onSignIn, onSignOut, onEveryoneOut, o
       <div className="button-row">
         <button type="button" className="btn" onClick={onImport}>Import sheet</button>
         <button type="button" className="btn" onClick={exportPdf} disabled={visits.length === 0}>Export PDF</button>
-        <button type="button" className="btn" onClick={sendToday} disabled={visits.length === 0}>Send end of day</button>
+        {isToday && <button type="button" className="btn" onClick={sendToday} disabled={visits.length === 0}>Send end of day</button>}
       </div>
 
       {remind && (
@@ -90,27 +111,27 @@ export function TodayScreen({ day, onOpen, onSignIn, onSignOut, onEveryoneOut, o
         </div>
       )}
 
-      <section>
+      {(isToday || onSite.length > 0) && <section>
         <div className="section-head">
-          <h2>On site now ({onSite.length})</h2>
+          <h2>{isToday ? 'On site now' : 'Still signed in'} ({onSite.length})</h2>
           {onSite.length > 0 && (
             <button type="button" className="link" onClick={() => onEveryoneOut(onSite.length)}>Everyone out</button>
           )}
         </div>
         {onSite.length === 0 ? (
-          <p className="empty">Nobody on site. Tap + Sign in to sign a vehicle in.</p>
+          <p className="empty">{isToday ? 'Nobody on site. Tap + Sign in to sign a vehicle in.' : 'Nobody left signed in on this day.'}</p>
         ) : (
           <ul className="list">{onSite.map((v) => <Row key={v.id} v={v} onOpen={onOpen} />)}</ul>
         )}
-      </section>
+      </section>}
 
       {out.length > 0 && (
         <section>
           <div className="section-head">
             <h2>Signed out ({out.length})</h2>
-            <button type="button" className="link" onClick={() => setShowOut(!showOut)}>{showOut ? 'Hide' : 'Show'}</button>
+            {isToday && <button type="button" className="link" onClick={() => setShowOut(!showOut)}>{showOut ? 'Hide' : 'Show'}</button>}
           </div>
-          {showOut && <ul className="list">{out.map((v) => <Row key={v.id} v={v} onOpen={onOpen} />)}</ul>}
+          {(showOut || !isToday) && <ul className="list">{out.map((v) => <Row key={v.id} v={v} onOpen={onOpen} />)}</ul>}
         </section>
       )}
     </main>

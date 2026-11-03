@@ -173,3 +173,9 @@ export async function closePastDays(today: string, db: RecordsDb = defaultDb): P
       v.timeOut = v.timeIn > END_OF_DAY ? v.timeIn : END_OF_DAY
     })
 }
+
+/** Remove whole days from Past days. The master list is not touched. Returns how many rows went. */
+export async function deleteDays(days: string[], db: RecordsDb = defaultDb): Promise<number> {
+  if (days.length === 0) return 0
+  return db.visits.where('day').anyOf(days).delete()
+}
