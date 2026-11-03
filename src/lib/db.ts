@@ -21,6 +21,8 @@ export interface Visit {
   toSee: string
   timeIn: string // "07:00"
   timeOut: string // "17:00", or "" while still on site
+  /** True when the time out was filled in by the app (17:00 on a past day), not by a person. */
+  autoOut?: boolean
   createdAt: number
 }
 

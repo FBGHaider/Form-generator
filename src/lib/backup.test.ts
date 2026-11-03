@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { masterRows, parseBackup, restoreBackup, signInRows } from './backup'
 import { RecordsDb } from './db'
-import { signIn, signOut, visitsFor } from './records'
+import { closePastDays, signIn, signOut, visitsFor } from './records'
 
 let db: RecordsDb
 beforeEach(async () => {
@@ -66,5 +66,50 @@ describe('backup and restore', () => {
 
   it('explains when the file is not a backup', () => {
     expect(() => parseBackup([{ sheet: '3 November 2026', data: [['Registration']] }])).toThrow(/not a backup/)
+  })
+
+  it('hands a day over to a colleague and back', async () => {
+    const DAY = '2026-11-03'
+    // Morning, my phone: two on site, one already gone.
+    const a = await signIn('AAA1', tom, DAY, '07:00', db)
+    await signIn('BBB2', tom, DAY, '07:10', db)
+    const c = await signIn('CCC3', tom, DAY, '08:00', db)
+    await signOut(c.id, '11:00', db)
+    void a
+
+    // 12:00 — the colleague takes over from my file.
+    const theirs = new RecordsDb(`test-${Math.random()}`)
+    await restoreBackup(parseBackup(await backupOf(db)), theirs)
+    const onTheirs = await visitsFor(DAY, theirs)
+    expect(onTheirs.map((v) => `${v.reg} ${v.timeIn}-${v.timeOut}`)).toEqual(['AAA1 07:00-', 'BBB2 07:10-', 'CCC3 08:00-11:00'])
+
+    // Afternoon on their phone: AAA1 leaves, a new car comes and goes, BBB2 leaves and comes back.
+    await signOut(onTheirs[0].id, '15:30', theirs)
+    const d = await signIn('DDD4', jess, DAY, '13:00', theirs)
+    await signOut(d.id, '13:40', theirs)
+    await signOut(onTheirs[1].id, '12:30', theirs)
+    await signIn('BBB2', tom, DAY, '14:00', theirs)
+
+    // Next morning my phone has closed yesterday at 17:00 by itself...
+    await closePastDays('2026-11-04', db)
+    expect((await visitsFor(DAY, db)).find((v) => v.reg === 'AAA1')!.timeOut).toBe('17:00')
+    // ...and then takes their handover: real times win over the automatic 17:00.
+    await restoreBackup(parseBackup(await backupOf(theirs)), db)
+    await closePastDays('2026-11-04', db)
+    const mine = await visitsFor(DAY, db)
+    expect(mine.map((v) => `${v.reg} ${v.timeIn}-${v.timeOut}`).sort()).toEqual([
+      'AAA1 07:00-15:30', 'BBB2 07:10-12:30', 'BBB2 14:00-17:00', 'CCC3 08:00-11:00', 'DDD4 13:00-13:40',
+    ])
+  })
+
+  it('a time out typed by a person is never replaced by a handover', async () => {
+    const DAY = '2026-11-03'
+    const a = await signIn('AAA1', tom, DAY, '07:00', db)
+    await signOut(a.id, '16:10', db)
+    const other = new RecordsDb(`test-${Math.random()}`)
+    await restoreBackup(parseBackup(await backupOf(db)), other)
+    await other.visits.toCollection().modify({ timeOut: '17:00' })
+    await restoreBackup(parseBackup(await backupOf(other)), db)
+    expect((await visitsFor(DAY, db))[0].timeOut).toBe('16:10')
   })
 })

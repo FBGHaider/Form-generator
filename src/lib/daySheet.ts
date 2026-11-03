@@ -149,8 +149,13 @@ export async function importDaySheet(
       }
       const same = existing.find((v) => v.reg === e.reg && v.timeIn === e.timeIn)
       if (same) {
-        if (e.timeOut && !same.timeOut) {
-          await db.visits.update(same.id, { timeOut: e.timeOut })
+        // Fill in a time out — or replace the app's automatic 17:00 with a
+        // real one, e.g. from a colleague's handover the next morning.
+        const better = e.timeOut && (!same.timeOut || (same.autoOut && e.timeOut !== same.timeOut))
+        if (better) {
+          await db.visits.update(same.id, { timeOut: e.timeOut, autoOut: false })
+          same.timeOut = e.timeOut
+          same.autoOut = false
           result.signedOut++
         } else {
           result.alreadyIn++
@@ -162,7 +167,8 @@ export async function importDaySheet(
         continue
       }
       const visit: Omit<Visit, 'id'> = { day, reg: e.reg, ...details, timeIn: e.timeIn, timeOut: e.timeOut, createdAt: now + seq++ }
-      await db.visits.add(visit as Visit)
+      const id = await db.visits.add(visit as Visit)
+      existing.push({ ...visit, id } as Visit)
       result.added++
     }
   })
