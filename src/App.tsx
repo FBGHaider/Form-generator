@@ -53,6 +53,10 @@ export function App() {
     void closePastDays(day)
   }, [day])
   const [tab, setTab] = useState<Tab>('today')
+  // The day shown on the Today tab: today, or an earlier day being looked at.
+  const [viewing, setViewing] = useState<string | null>(null)
+  const shown = viewing && viewing < day ? viewing : day
+  const showDay = (d: string) => setViewing(d >= day ? null : d)
   const [signingIn, setSigningIn] = useState(false)
   const [openId, setOpenId] = useState<number | null>(null)
   const [everyoneOut, setEveryoneOut] = useState<number | null>(null)
@@ -63,11 +67,11 @@ export function App() {
     <div className="app">
       <InstallHint />
       {tab === 'today' && (
-        <TodayScreen day={day} onOpen={(v) => setOpenId(v.id)} onEveryoneOut={setEveryoneOut} onImport={() => setImporting(true)}
-          onSignIn={() => setSigningIn(true)} onSignOut={() => setSigningOut(true)} />
+        <TodayScreen day={shown} today={day} onDay={showDay} onOpen={(v) => setOpenId(v.id)} onEveryoneOut={setEveryoneOut}
+          onImport={() => setImporting(true)} onSignIn={() => setSigningIn(true)} onSignOut={() => setSigningOut(true)} />
       )}
       {tab === 'master' && <MasterScreen day={day} />}
-      {tab === 'history' && <HistoryScreen />}
+      {tab === 'history' && <HistoryScreen onOpenDay={(d) => { showDay(d); setTab('today') }} />}
 
 
       <nav className="tabs">
@@ -80,15 +84,17 @@ export function App() {
 
       {signingIn && (
         <SignInSheet
-          day={day}
+          day={shown}
           onClose={() => setSigningIn(false)}
+          // A car added to an earlier day is signed out at 17:00 like the rest of that day.
+          onDone={() => { if (shown < day) void closePastDays(day) }}
           onOpenVisit={(v) => { setSigningIn(false); setOpenId(v.id) }}
         />
       )}
-      {signingOut && <SignOutSheet day={day} onClose={() => setSigningOut(false)} />}
+      {signingOut && <SignOutSheet day={shown} onClose={() => setSigningOut(false)} />}
       {openId !== null && <VisitSheet id={openId} onClose={() => setOpenId(null)} />}
       {importing && <ImportDaySheet today={day} onClose={() => setImporting(false)} />}
-      {everyoneOut !== null && <EveryoneOutSheet day={day} count={everyoneOut} onClose={() => setEveryoneOut(null)} />}
+      {everyoneOut !== null && <EveryoneOutSheet day={shown} count={everyoneOut} onClose={() => setEveryoneOut(null)} />}
     </div>
   )
 }

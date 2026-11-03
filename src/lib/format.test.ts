@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { weekStart, dayKey, displayName, fileDay, isValidTime, longDay, normaliseReg, orUnknown, printTime, timeNow } from './format'
+import { shiftDay, weekdayDay, weekStart, dayKey, displayName, fileDay, isValidTime, longDay, normaliseReg, orUnknown, printTime, timeNow } from './format'
 
 describe('format', () => {
   it('normalises registrations', () => {
@@ -48,5 +48,11 @@ describe('format', () => {
     expect(weekStart('2026-11-02')).toBe('2026-11-02') // Monday
     expect(weekStart('2026-11-08')).toBe('2026-11-02') // Sunday
     expect(weekStart('2026-11-01')).toBe('2026-10-26') // Sunday, the week before
+  })
+
+  it('moves between days across months', () => {
+    expect(shiftDay('2026-11-01', -1)).toBe('2026-10-31')
+    expect(shiftDay('2026-10-31', 1)).toBe('2026-11-01')
+    expect(weekdayDay('2026-11-03')).toBe('Tuesday 3 Nov 2026')
   })
 })

@@ -1,8 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { db, type CarDetails } from '../lib/db'
-import { displayName, orUnknown, printTime, timeNow } from '../lib/format'
-import { deleteVisit, signOut, updateVisit } from '../lib/records'
+import { dayKey, displayName, orUnknown, printTime, timeNow } from '../lib/format'
+import { deleteVisit, END_OF_DAY, signOut, updateVisit } from '../lib/records'
 import { DetailsFields } from './DetailsFields'
 import { MissingName } from './MissingName'
 import { Sheet } from './Sheet'
@@ -67,6 +67,7 @@ export function VisitSheet({ id, onClose, onDone }: { id: number; onClose: () =>
   }
 
   const onSite = visit.timeOut === ''
+  const isPast = visit.day < dayKey()
   return (
     <Sheet title={visit.reg} onClose={onClose}>
       <div className="known">
@@ -80,10 +81,11 @@ export function VisitSheet({ id, onClose, onDone }: { id: number; onClose: () =>
       </div>
       {onSite && (
         <button type="button" className="btn primary block huge" onClick={() => {
-          const t = timeNow()
+          // On an earlier day "now" means nothing: close it at 17:00 like the rest of that day.
+          const t = isPast ? (visit.timeIn > END_OF_DAY ? visit.timeIn : END_OF_DAY) : timeNow()
           void run(() => signOut(id, t), `${visit.reg} signed out at ${printTime(t)}`)
         }}>
-          Time out now
+          {isPast ? 'Sign out at 17:00' : 'Time out now'}
         </button>
       )}
       <button type="button" className="btn block" onClick={startEdit}>Edit / change times</button>

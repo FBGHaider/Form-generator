@@ -66,3 +66,16 @@ export function weekStart(day: string): string {
   date.setDate(date.getDate() - back)
   return dayKey(date)
 }
+
+/** The day `n` days after `day` (negative for before). */
+export function shiftDay(day: string, n: number): string {
+  const [y, m, d] = day.split('-').map(Number)
+  return dayKey(new Date(y, m - 1, d + n))
+}
+
+/** "Tuesday 3 Nov 2026" */
+export function weekdayDay(day: string): string {
+  const [y, m, d] = day.split('-').map(Number)
+  const name = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date(y, m - 1, d).getDay()]
+  return `${name} ${longDay(day)}`
+}

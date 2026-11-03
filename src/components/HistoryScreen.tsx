@@ -3,7 +3,7 @@ import { useRef, useState } from 'react'
 import type { BackupContents } from '../lib/backup'
 import { dayKey, longDay, weekStart } from '../lib/format'
 import { lastSentDay, sendBackup } from '../lib/endOfDay'
-import { closePastDays, daysWithVisits, visitsFor } from '../lib/records'
+import { closePastDays, daysWithVisits, deleteDays, visitsFor } from '../lib/records'
 import { shareFile, shareFiles } from '../lib/share'
 import { Sheet } from './Sheet'
 import { errorText, useToast } from './Toast'
@@ -36,7 +36,7 @@ function RestoreSheet({ backup, onClose }: { backup: BackupContents; onClose: ()
   )
 }
 
-export function HistoryScreen() {
+export function HistoryScreen({ onOpenDay }: { onOpenDay: (day: string) => void }) {
   const notify = useToast()
   const days = useLiveQuery(() => daysWithVisits(), []) ?? []
   const file = useRef<HTMLInputElement>(null)
@@ -55,6 +55,20 @@ export function HistoryScreen() {
   const today = dayKey()
   const monday = weekStart(today)
   const thisWeek = days.filter((d) => d.day >= monday && d.day <= today).map((d) => d.day)
+
+  const deleteSelected = async () => {
+    const chosen = [...selected].sort()
+    const n = chosen.length
+    const list = n <= 4 ? chosen.map(longDay).join(', ') : `${n} days, ${longDay(chosen[0])} to ${longDay(chosen[n - 1])}`
+    if (!confirm(`Delete ${list}?\n\nEvery sign-in on ${n === 1 ? 'that day' : 'those days'} is removed from this phone. This cannot be undone unless you have a backup. The master list is not changed.`)) return
+    try {
+      const rows = await deleteDays(chosen)
+      notify(`Deleted ${n} ${n === 1 ? 'day' : 'days'} (${rows} sign-ins)`)
+      setSelected(new Set())
+    } catch (e) {
+      notify(errorText(e), 'error')
+    }
+  }
 
   /** One PDF per selected day, oldest first, all in one share sheet. */
   const shareSelected = async () => {
@@ -142,7 +156,7 @@ export function HistoryScreen() {
           <p className="empty">Nothing yet.</p>
         ) : (
           <>
-            <p className="hint">Tick the days to send, then tap Share.</p>
+            <p className="hint">Tick days to share or delete them. Open shows a day with everything you can do on Today.</p>
             <ul className="list">
               {days.map(({ day, count }) => (
                 <li key={day} className={selected.has(day) ? 'day-row picked' : 'day-row'}>
@@ -153,6 +167,7 @@ export function HistoryScreen() {
                       <span className="muted"> · {count} vehicles</span>
                     </span>
                   </label>
+                  <button type="button" className="btn small" onClick={() => onOpenDay(day)}>Open</button>
                   <button type="button" className="btn small" onClick={() => exportDay(day)}>PDF</button>
                 </li>
               ))}
@@ -163,10 +178,13 @@ export function HistoryScreen() {
 
       {selected.size > 0 && (
         <div className="share-bar">
-          <span>{selected.size} {selected.size === 1 ? 'day' : 'days'} selected</span>
-          <button type="button" className="btn primary" disabled={sharing} onClick={shareSelected}>
-            Share {selected.size} {selected.size === 1 ? 'PDF' : 'PDFs'}
-          </button>
+          <span>{selected.size} {selected.size === 1 ? 'day' : 'days'}</span>
+          <span className="share-bar-buttons">
+            <button type="button" className="btn danger-solid" onClick={deleteSelected}>Delete</button>
+            <button type="button" className="btn primary" disabled={sharing} onClick={shareSelected}>
+              Share {selected.size} {selected.size === 1 ? 'PDF' : 'PDFs'}
+            </button>
+          </span>
         </div>
       )}
 

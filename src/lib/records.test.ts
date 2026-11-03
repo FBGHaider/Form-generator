@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { RecordsDb } from './db'
 import {
-  closePastDays, daysWithVisits, findCar, openVisit, rankByReg, setDriverName, signIn, signOut, signOutEveryone, suggestCars, updateVisit, visitsFor,
+  closePastDays, daysWithVisits, deleteDays, findCar, openVisit, rankByReg, setDriverName, signIn, signOut, signOutEveryone, suggestCars, updateVisit, visitsFor,
 } from './records'
 
 const DAY = '2026-10-28'
@@ -117,5 +117,15 @@ describe('records', () => {
     expect(past.map((v) => `${v.reg} ${v.timeOut}`)).toEqual(['AAA1 17:00', 'BBB2 15:35', 'LATE1 18:10'])
     expect((await visitsFor(DAY, db))[0].timeOut).toBe('')
     expect(await closePastDays(DAY, db)).toBe(0)
+  })
+
+  it('deletes whole days and nothing else', async () => {
+    await signIn('AAA1', tom, '2026-09-22', '07:00', db)
+    await signIn('BBB2', tom, '2026-09-22', '07:00', db)
+    await signIn('AAA1', tom, '2026-09-24', '07:00', db)
+    await signIn('AAA1', tom, DAY, '07:00', db)
+    expect(await deleteDays(['2026-09-22', '2026-09-24'], db)).toBe(3)
+    expect((await daysWithVisits(db)).map((d) => d.day)).toEqual([DAY])
+    expect(await db.cars.count()).toBe(2)
   })
 })
