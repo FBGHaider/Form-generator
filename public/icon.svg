@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1f3a5f"/>
+  <rect x="96" y="96" width="320" height="360" rx="28" fill="#ffffff"/>
+  <rect x="176" y="68" width="160" height="64" rx="18" fill="#cfd8e3"/>
+  <rect x="136" y="176" width="240" height="64" rx="10" fill="#ffd400"/>
+  <text x="256" y="222" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="40" text-anchor="middle" fill="#111">IN · OUT</text>
+  <rect x="136" y="276" width="240" height="18" rx="9" fill="#cfd8e3"/>
+  <rect x="136" y="318" width="240" height="18" rx="9" fill="#cfd8e3"/>
+  <rect x="136" y="360" width="160" height="18" rx="9" fill="#cfd8e3"/>
+</svg>
