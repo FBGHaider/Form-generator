@@ -79,3 +79,26 @@ export function weekdayDay(day: string): string {
   const name = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date(y, m - 1, d).getDay()]
   return `${name} ${longDay(day)}`
 }
+
+/** "26 Oct – 1 Nov 2026" for the Monday-to-Sunday week starting on `monday`. */
+export function weekLabel(monday: string): string {
+  const sunday = shiftDay(monday, 6)
+  const [, , d1] = monday.split('-').map(Number)
+  const m1 = longDay(monday).split(' ')[1]
+  const [y2] = sunday.split('-').map(Number)
+  const sameYear = Number(monday.slice(0, 4)) === y2
+  const start = sameYear ? `${d1} ${m1}` : longDay(monday)
+  return `${start} – ${longDay(sunday)}`
+}
+
+/** Days grouped into Monday-to-Sunday weeks, keeping their order. */
+export function groupByWeek<T extends { day: string }>(days: T[]): { monday: string; days: T[] }[] {
+  const groups: { monday: string; days: T[] }[] = []
+  for (const d of days) {
+    const monday = weekStart(d.day)
+    const last = groups[groups.length - 1]
+    if (last && last.monday === monday) last.days.push(d)
+    else groups.push({ monday, days: [d] })
+  }
+  return groups
+}

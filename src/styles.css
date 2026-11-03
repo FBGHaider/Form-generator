@@ -187,3 +187,6 @@ section { margin-top: 18px; }
 .past-day { flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 .share-bar-buttons { display: flex; gap: 8px; }
 .day-row .btn.small + .btn.small { margin-left: 6px; }
+
+.week + .week { margin-top: 18px; padding-top: 14px; border-top: 2px solid var(--line); }
+.week-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-weight: 700; color: var(--muted); font-size: 14px; }

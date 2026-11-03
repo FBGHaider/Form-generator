@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useRef, useState } from 'react'
 import type { BackupContents } from '../lib/backup'
-import { dayKey, longDay, weekStart } from '../lib/format'
+import { dayKey, groupByWeek, longDay, weekdayDay, weekLabel, weekStart } from '../lib/format'
 import { lastSentDay, sendBackup } from '../lib/endOfDay'
 import { closePastDays, daysWithVisits, deleteDays, visitsFor } from '../lib/records'
 import { shareFile, shareFiles } from '../lib/share'
@@ -157,13 +157,29 @@ export function HistoryScreen({ onOpenDay }: { onOpenDay: (day: string) => void 
         ) : (
           <>
             <p className="hint">Tick days to share or delete them. Open shows a day with everything you can do on Today.</p>
+            {groupByWeek(days).map((week) => {
+              const weekDays = week.days.map((d) => d.day)
+              const allPicked = weekDays.every((d) => selected.has(d))
+              return (
+            <div key={week.monday} className="week">
+            <div className="week-head">
+              <span>Week of {weekLabel(week.monday)}</span>
+              <button type="button" className="link" onClick={() => setSelected((s) => {
+                const next = new Set(s)
+                for (const d of weekDays) {
+                  if (allPicked) next.delete(d)
+                  else next.add(d)
+                }
+                return next
+              })}>{allPicked ? 'Untick' : 'Select'}</button>
+            </div>
             <ul className="list">
-              {days.map(({ day, count }) => (
+              {week.days.map(({ day, count }) => (
                 <li key={day} className={selected.has(day) ? 'day-row picked' : 'day-row'}>
                   <label className="pick">
                     <input type="checkbox" checked={selected.has(day)} onChange={() => toggle(day)} />
                     <span>
-                      <strong>{longDay(day)}</strong>
+                      <strong>{weekdayDay(day).split(' ')[0].slice(0, 3)} {longDay(day)}</strong>
                       <span className="muted"> · {count} vehicles</span>
                     </span>
                   </label>
@@ -172,6 +188,9 @@ export function HistoryScreen({ onOpenDay }: { onOpenDay: (day: string) => void 
                 </li>
               ))}
             </ul>
+            </div>
+              )
+            })}
           </>
         )}
       </section>
