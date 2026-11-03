@@ -4,6 +4,7 @@ import { HistoryScreen } from './components/HistoryScreen'
 import { ImportDaySheet } from './components/ImportDaySheet'
 import { MasterScreen } from './components/MasterScreen'
 import { SignInSheet } from './components/SignInSheet'
+import { SignOutSheet } from './components/SignOutSheet'
 import { TodayScreen } from './components/TodayScreen'
 import { VisitSheet } from './components/VisitSheet'
 import { dayKey } from './lib/format'
@@ -50,22 +51,18 @@ export function App() {
   const [openId, setOpenId] = useState<number | null>(null)
   const [everyoneOut, setEveryoneOut] = useState<number | null>(null)
   const [importing, setImporting] = useState(false)
-  // Bumped after a car is signed in or out, to empty the Today search box.
-  const [clearSearch, setClearSearch] = useState(0)
-  const searchDone = () => setClearSearch((n) => n + 1)
+  const [signingOut, setSigningOut] = useState(false)
 
   return (
     <div className="app">
       <InstallHint />
       {tab === 'today' && (
-        <TodayScreen day={day} onOpen={(v) => setOpenId(v.id)} onEveryoneOut={setEveryoneOut} onImport={() => setImporting(true)} clearSearch={clearSearch} />
+        <TodayScreen day={day} onOpen={(v) => setOpenId(v.id)} onEveryoneOut={setEveryoneOut} onImport={() => setImporting(true)}
+          onSignIn={() => setSigningIn(true)} onSignOut={() => setSigningOut(true)} />
       )}
       {tab === 'master' && <MasterScreen day={day} />}
       {tab === 'history' && <HistoryScreen />}
 
-      {tab === 'today' && (
-        <button type="button" className="fab" aria-label="Sign a vehicle in" onClick={() => setSigningIn(true)}>+</button>
-      )}
 
       <nav className="tabs">
         {(['today', 'master', 'history'] as const).map((t) => (
@@ -80,10 +77,10 @@ export function App() {
           day={day}
           onClose={() => setSigningIn(false)}
           onOpenVisit={(v) => { setSigningIn(false); setOpenId(v.id) }}
-          onDone={searchDone}
         />
       )}
-      {openId !== null && <VisitSheet id={openId} onClose={() => setOpenId(null)} onDone={searchDone} />}
+      {signingOut && <SignOutSheet day={day} onClose={() => setSigningOut(false)} />}
+      {openId !== null && <VisitSheet id={openId} onClose={() => setOpenId(null)} />}
       {importing && <ImportDaySheet today={day} onClose={() => setImporting(false)} />}
       {everyoneOut !== null && <EveryoneOutSheet day={day} count={everyoneOut} onClose={() => setEveryoneOut(null)} />}
     </div>

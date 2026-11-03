@@ -1,18 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { db, type Visit } from '../lib/db'
-import { displayName, longDay, normaliseReg, orUnknown, printTime } from '../lib/format'
+import { displayName, longDay, orUnknown, printTime } from '../lib/format'
 import { visitsFor } from '../lib/records'
 import { shareFile } from '../lib/share'
 import { errorText, useToast } from './Toast'
-
-function matches(v: Visit, q: string) {
-  if (!q) return true
-  const reg = normaliseReg(q)
-  if (reg && v.reg.includes(reg)) return true
-  const hay = `${v.firstName} ${v.lastName} ${v.company}`.toLowerCase()
-  return hay.includes(q.trim().toLowerCase())
-}
 
 function Row({ v, onOpen }: { v: Visit; onOpen: (v: Visit) => void }) {
   return (
@@ -32,24 +24,20 @@ function Row({ v, onOpen }: { v: Visit; onOpen: (v: Visit) => void }) {
   )
 }
 
-export function TodayScreen({ day, onOpen, onEveryoneOut, onImport, clearSearch }: {
+export function TodayScreen({ day, onOpen, onSignIn, onSignOut, onEveryoneOut, onImport }: {
   day: string
   onOpen: (v: Visit) => void
+  onSignIn: () => void
+  onSignOut: () => void
   onEveryoneOut: (count: number) => void
   onImport: () => void
-  /** Changes whenever the search box should be emptied (after signing a car in or out). */
-  clearSearch: number
 }) {
   const notify = useToast()
-  const [q, setQ] = useState('')
-  useEffect(() => setQ(''), [clearSearch])
   const [showOut, setShowOut] = useState(false)
   const visits = useLiveQuery(() => db.visits.where('day').equals(day).sortBy('createdAt'), [day]) ?? []
 
   const onSite = visits.filter((v) => v.timeOut === '')
   const out = visits.filter((v) => v.timeOut !== '')
-  const shownOn = onSite.filter((v) => matches(v, q))
-  const shownOut = out.filter((v) => matches(v, q))
 
   const exportPdf = async () => {
     try {
@@ -69,22 +57,15 @@ export function TodayScreen({ day, onOpen, onEveryoneOut, onImport, clearSearch 
         </div>
       </header>
 
+      <div className="in-out">
+        <button type="button" className="btn primary" onClick={onSignIn}>+ Sign in</button>
+        <button type="button" className="btn out" onClick={onSignOut} disabled={onSite.length === 0}>Sign out</button>
+      </div>
+
       <div className="button-row">
         <button type="button" className="btn" onClick={onImport}>Import sheet</button>
         <button type="button" className="btn" onClick={exportPdf} disabled={visits.length === 0}>Export PDF</button>
       </div>
-
-      <input
-        className="search"
-        type="search"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Search registration or name"
-        autoCapitalize="characters"
-        autoComplete="off"
-        autoCorrect="off"
-        spellCheck={false}
-      />
 
       <section>
         <div className="section-head">
@@ -93,10 +74,10 @@ export function TodayScreen({ day, onOpen, onEveryoneOut, onImport, clearSearch 
             <button type="button" className="link" onClick={() => onEveryoneOut(onSite.length)}>Everyone out</button>
           )}
         </div>
-        {shownOn.length === 0 ? (
-          <p className="empty">{onSite.length === 0 ? 'Nobody signed in yet. Tap + to sign a vehicle in.' : 'No match.'}</p>
+        {onSite.length === 0 ? (
+          <p className="empty">Nobody on site. Tap + Sign in to sign a vehicle in.</p>
         ) : (
-          <ul className="list">{shownOn.map((v) => <Row key={v.id} v={v} onOpen={onOpen} />)}</ul>
+          <ul className="list">{onSite.map((v) => <Row key={v.id} v={v} onOpen={onOpen} />)}</ul>
         )}
       </section>
 
@@ -106,7 +87,7 @@ export function TodayScreen({ day, onOpen, onEveryoneOut, onImport, clearSearch 
             <h2>Signed out ({out.length})</h2>
             <button type="button" className="link" onClick={() => setShowOut(!showOut)}>{showOut ? 'Hide' : 'Show'}</button>
           </div>
-          {(showOut || q) && <ul className="list">{shownOut.map((v) => <Row key={v.id} v={v} onOpen={onOpen} />)}</ul>}
+          {showOut && <ul className="list">{out.map((v) => <Row key={v.id} v={v} onOpen={onOpen} />)}</ul>}
         </section>
       )}
     </main>
