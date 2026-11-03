@@ -23,6 +23,7 @@ export function HistoryScreen() {
         <div>
           <h1>Past days</h1>
           <div className="muted">Every day is kept on this phone</div>
+          <div className="muted">App version: {__APP_VERSION__}</div>
         </div>
       </header>
       {days.length === 0 ? (
