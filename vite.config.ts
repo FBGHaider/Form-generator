@@ -21,9 +21,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo.png'],
       manifest: {
-        name: 'Gatehouse',
-        short_name: 'Gatehouse',
-        description: 'Gatehouse — sign vehicles in and out at the gate, and keep every day’s sheet.',
+        name: 'Alert Gatehouse',
+        short_name: 'Alert Gatehouse',
+        description: 'Alert Gatehouse — sign vehicles in and out at the gate, and keep every day’s sheet.',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
