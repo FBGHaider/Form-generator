@@ -155,3 +155,21 @@ export async function setDriverName(
     await db.visits.where('day').equals(day).filter((v) => v.reg === r).modify(name)
   })
 }
+
+/** Past days are closed at this time: anyone left signed in is signed out. */
+export const END_OF_DAY = '17:00'
+
+/**
+ * Sign out everyone still signed in on a day before `today`, at 17:00 — or at
+ * their time in, for the rare car that came in after 17:00, so time out is
+ * never before time in. Today is left alone. Returns how many were signed out.
+ */
+export async function closePastDays(today: string, db: RecordsDb = defaultDb): Promise<number> {
+  return db.visits
+    .where('day')
+    .below(today)
+    .filter((v) => v.timeOut === '')
+    .modify((v) => {
+      v.timeOut = v.timeIn > END_OF_DAY ? v.timeIn : END_OF_DAY
+    })
+}

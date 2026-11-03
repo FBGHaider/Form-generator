@@ -8,6 +8,7 @@ import { SignOutSheet } from './components/SignOutSheet'
 import { TodayScreen } from './components/TodayScreen'
 import { VisitSheet } from './components/VisitSheet'
 import { dayKey } from './lib/format'
+import { closePastDays } from './lib/records'
 
 type Tab = 'today' | 'master' | 'history'
 
@@ -46,6 +47,11 @@ function InstallHint() {
 
 export function App() {
   const day = useToday()
+  // When the app opens and when a new day starts, anyone still signed in on
+  // an earlier day is signed out at 17:00.
+  useEffect(() => {
+    void closePastDays(day)
+  }, [day])
   const [tab, setTab] = useState<Tab>('today')
   const [signingIn, setSigningIn] = useState(false)
   const [openId, setOpenId] = useState<number | null>(null)
