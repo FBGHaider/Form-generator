@@ -83,11 +83,11 @@ section { margin-top: 18px; }
 .link { background: none; border: 0; color: var(--brand); font-weight: 600; padding: 4px; }
 .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
 
-.fab {
-  position: fixed; right: 20px; bottom: calc(84px + env(safe-area-inset-bottom));
-  width: 64px; height: 64px; border-radius: 50%; border: 0; background: var(--brand); color: var(--brand-text);
-  font-size: 36px; line-height: 1; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-}
+.in-out { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.in-out .btn { padding: 18px 10px; font-size: 20px; }
+.btn.out { background: var(--danger); border-color: var(--danger); color: #fff; }
+.out-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.out-row .btn { padding: 10px 18px; font-size: 17px; }
 
 .tabs {
   position: fixed; left: 0; right: 0; bottom: 0; display: flex; background: var(--card);
@@ -144,7 +144,7 @@ section { margin-top: 18px; }
 .install-hint { display: flex; gap: 10px; align-items: flex-start; background: var(--warn-bg); padding: calc(10px + env(safe-area-inset-top)) 16px 10px; font-size: 14px; }
 
 .toast {
-  position: fixed; left: 16px; right: 16px; bottom: calc(160px + env(safe-area-inset-bottom)); z-index: 20;
+  position: fixed; left: 16px; right: 16px; bottom: calc(90px + env(safe-area-inset-bottom)); z-index: 20;
   max-width: 600px; margin: 0 auto; padding: 12px 16px; border-radius: var(--radius);
   background: #15181d; color: #fff; font-weight: 600; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
