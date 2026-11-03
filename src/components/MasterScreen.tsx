@@ -11,12 +11,13 @@ import { DetailsFields } from './DetailsFields'
 import { Sheet } from './Sheet'
 import { errorText, useToast } from './Toast'
 
-function ImportSheet({ result, onClose }: { result: MasterFileResult; onClose: () => void }) {
+function ImportSheet({ result, onClose, onDone }: { result: MasterFileResult; onClose: () => void; onDone: () => void }) {
   const notify = useToast()
   const go = async () => {
     try {
       const r = await importCars(result.cars)
       notify(`Master list: ${r.added} added, ${r.updated} updated`)
+      onDone()
       onClose()
     } catch (e) {
       notify(errorText(e), 'error')
@@ -42,7 +43,8 @@ function ImportSheet({ result, onClose }: { result: MasterFileResult; onClose: (
   )
 }
 
-function CarSheet({ car, day, onClose }: { car: Car | null; day: string; onClose: () => void }) {
+/** `onDone` runs after the car was saved or deleted; `onClose` on any close, Cancel included. */
+function CarSheet({ car, day, onClose, onDone }: { car: Car | null; day: string; onClose: () => void; onDone: () => void }) {
   const notify = useToast()
   const [reg, setReg] = useState(car?.reg ?? '')
   const [details, setDetails] = useState<CarDetails>(
@@ -65,6 +67,7 @@ function CarSheet({ car, day, onClose }: { car: Car | null; day: string; onClose
         await saveCar(r, details)
         notify(`${r} saved`)
       }
+      onDone()
       onClose()
     } catch (e) {
       notify(errorText(e), 'error')
@@ -103,6 +106,7 @@ function CarSheet({ car, day, onClose }: { car: Car | null; day: string; onClose
             if (!confirm(`Delete ${car.reg} from the master list? Past sheets are not changed.`)) return
             await deleteCar(car.reg)
             notify(`${car.reg} deleted`)
+            onDone()
             onClose()
           }}>Delete from master list</button>
         )}
@@ -183,8 +187,8 @@ export function MasterScreen({ day }: { day: string }) {
         </ul>
       )}
 
-      {importing && <ImportSheet result={importing} onClose={() => setImporting(null)} />}
-      {editing !== undefined && <CarSheet car={editing} day={day} onClose={() => setEditing(undefined)} />}
+      {importing && <ImportSheet result={importing} onClose={() => setImporting(null)} onDone={() => setQ('')} />}
+      {editing !== undefined && <CarSheet car={editing} day={day} onClose={() => setEditing(undefined)} onDone={() => setQ('')} />}
     </main>
   )
 }
