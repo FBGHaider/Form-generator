@@ -2,9 +2,10 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
-// GitHub Pages serves the site from /form-generator/. Override with BASE_PATH
-// if it is ever hosted somewhere else.
-const base = process.env.BASE_PATH ?? '/form-generator/'
+// Relative paths, so the app works wherever it is served from — GitHub Pages
+// serves it under the repository name (/Form-generator/), and that name's
+// capitalisation must not matter. Override with BASE_PATH if ever needed.
+const base = process.env.BASE_PATH ?? './'
 
 export default defineConfig({
   base,
