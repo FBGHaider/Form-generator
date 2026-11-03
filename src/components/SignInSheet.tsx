@@ -7,6 +7,7 @@ import { signIn, suggestCars } from '../lib/records'
 import { DetailsFields } from './DetailsFields'
 import { MissingName } from './MissingName'
 import { Sheet } from './Sheet'
+import { Clearable } from './Clearable'
 import { errorText, useToast } from './Toast'
 
 const blank: CarDetails = { firstName: '', lastName: '', company: '', toSee: TO_SEE_OPTIONS[0] }
@@ -97,18 +98,20 @@ export function SignInSheet({ day, onClose, onOpenVisit, onDone }: {
       <form onSubmit={(e) => { e.preventDefault(); void save() }}>
         <label className="field">
           <span>Registration</span>
-          <input
-            ref={regInput}
-            className="reg-input"
-            value={regText}
-            onChange={(e) => onRegChange(e.target.value)}
-            autoCapitalize="characters"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck={false}
-            enterKeyHint="next"
-            placeholder="Last 3 letters, e.g. WAE"
-          />
+          <Clearable value={regText} onClear={() => onRegChange('')}>
+            <input
+              ref={regInput}
+              className="reg-input"
+              value={regText}
+              onChange={(e) => onRegChange(e.target.value)}
+              autoCapitalize="characters"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="next"
+              placeholder="Last 3 letters, e.g. WAE"
+            />
+          </Clearable>
         </label>
 
         {showSuggestions && (

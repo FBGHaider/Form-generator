@@ -4,6 +4,7 @@ import { db } from '../lib/db'
 import { displayName, orUnknown, printTime, timeNow } from '../lib/format'
 import { rankByReg, signOut } from '../lib/records'
 import { Sheet } from './Sheet'
+import { Clearable } from './Clearable'
 import { errorText, useToast } from './Toast'
 
 /**
@@ -38,17 +39,19 @@ export function SignOutSheet({ day, onClose }: { day: string; onClose: () => voi
     <Sheet title="Sign out" onClose={onClose}>
       <label className="field">
         <span>Registration</span>
-        <input
-          ref={input}
-          className="reg-input"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          autoCapitalize="characters"
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck={false}
-          placeholder="Last 3 letters, e.g. WAE"
-        />
+        <Clearable value={q} onClear={() => setQ('')}>
+          <input
+            ref={input}
+            className="reg-input"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            autoCapitalize="characters"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder="Last 3 letters, e.g. WAE"
+          />
+        </Clearable>
       </label>
       {onSite.length === 0 ? (
         <p className="empty">Nobody is on site.</p>

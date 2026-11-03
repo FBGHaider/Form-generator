@@ -9,6 +9,7 @@ import { deleteCar, openVisit, saveCar, signIn } from '../lib/records'
 import { shareFile } from '../lib/share'
 import { DetailsFields } from './DetailsFields'
 import { Sheet } from './Sheet'
+import { Clearable } from './Clearable'
 import { errorText, useToast } from './Toast'
 
 function ImportSheet({ result, onClose, onDone }: { result: MasterFileResult; onClose: () => void; onDone: () => void }) {
@@ -167,7 +168,9 @@ export function MasterScreen({ day }: { day: string }) {
       </div>
       <p className="hint">Export now and then and keep the file somewhere safe — it is your backup.</p>
 
-      <input className="search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search registration or name" autoComplete="off" autoCorrect="off" spellCheck={false} />
+      <Clearable value={q} onClear={() => setQ('')} className="screen-search">
+        <input className="search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search registration or name" autoComplete="off" autoCorrect="off" spellCheck={false} />
+      </Clearable>
 
       {shown.length === 0 ? (
         <p className="empty">{cars.length === 0 ? 'No cars yet. Import your master Excel file, or add cars as they arrive.' : 'No match.'}</p>

@@ -151,7 +151,7 @@ input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: n
 .list.compact .day-row { padding: 8px 12px; gap: 8px; }
 .list.compact .plate { min-width: 84px; margin-right: 6px; font-size: 14px; }
 .screen .button-row { margin-bottom: 14px; }
-.screen > .search { display: block; margin-bottom: 14px; }
+.screen > .search, .screen > .screen-search { display: block; margin-bottom: 14px; }
 /* Today's smaller actions: an even two-column grid instead of a ragged wrap */
 .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
 .actions .btn { width: 100%; min-width: 0; white-space: normal; line-height: 1.2; }
@@ -226,3 +226,14 @@ input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: n
 .brand-title > div { min-width: 0; }
 .brand-line { display: flex; align-items: center; gap: 6px; }
 .install-hint { align-items: center; }
+
+/* A search box with its own ✕ */
+.clearable { position: relative; }
+.clearable input { padding-right: 46px !important; }
+.clear-btn {
+  position: absolute; top: 50%; right: 8px; transform: translateY(-50%);
+  width: 32px; height: 32px; border-radius: 50%; border: 0; padding: 0;
+  background: var(--line); color: var(--text); font-size: 15px; font-weight: 700; line-height: 32px; text-align: center;
+}
+/* The browser's own clear button would make two. */
+input[type='search']::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
