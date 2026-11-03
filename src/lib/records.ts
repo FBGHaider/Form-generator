@@ -85,7 +85,7 @@ export async function signIn(
 
 export async function signOut(id: number, timeOut: string, db: RecordsDb = defaultDb): Promise<void> {
   requireTime(timeOut)
-  await db.visits.update(id, { timeOut })
+  await db.visits.update(id, { timeOut, autoOut: false })
 }
 
 /** Sign out every car still on site that day. Returns how many were signed out. */
@@ -95,7 +95,7 @@ export async function signOutEveryone(day: string, timeOut: string, db: RecordsD
     .where('day')
     .equals(day)
     .filter((v) => v.timeOut === '')
-    .modify({ timeOut })
+    .modify({ timeOut, autoOut: false })
 }
 
 /** Correct a row: details, time in or time out. Details also update the master list. */
@@ -110,6 +110,8 @@ export async function updateVisit(
     const v = await db.visits.get(id)
     if (!v) throw new Error('That entry no longer exists')
     const next = { ...v, ...patch }
+    // A time out typed in by a person is not the app's automatic 17:00 any more.
+    if (patch.timeOut !== undefined && patch.timeOut !== v.timeOut) next.autoOut = false
     const details = clean(next)
     await db.visits.put({ ...next, ...details })
     await db.cars.put({ reg: v.reg, ...details, updatedAt: Date.now() })
@@ -171,6 +173,7 @@ export async function closePastDays(today: string, db: RecordsDb = defaultDb): P
     .filter((v) => v.timeOut === '')
     .modify((v) => {
       v.timeOut = v.timeIn > END_OF_DAY ? v.timeIn : END_OF_DAY
+      v.autoOut = true
     })
 }
 

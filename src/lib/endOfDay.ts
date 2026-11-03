@@ -48,3 +48,19 @@ export async function sendBackup(day: string): Promise<ShareOutcome> {
   if (outcome !== 'cancelled') markSent(day)
   return outcome
 }
+
+/**
+ * Hand the shift over: everything on this phone in one file, named with the
+ * time, for the next person to take over from (AirDrop works with no signal).
+ */
+export async function sendHandover(day: string): Promise<ShareOutcome> {
+  const { blob } = await backupFile(day)
+  const now = new Date()
+  const hhmm = `${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}`
+  const outcome = await shareFiles(
+    [{ blob, name: `Vehicle_Records_handover_${fileDay(day)}_${hhmm}.xlsx` }],
+    `Vehicle Records handover ${longDay(day)}`,
+  )
+  if (outcome !== 'cancelled') markSent(day)
+  return outcome
+}

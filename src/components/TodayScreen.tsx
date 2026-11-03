@@ -37,7 +37,7 @@ function Row({ v, onOpen }: { v: Visit; onOpen: (v: Visit) => void }) {
  * date box. Every feature works the same on any day; the end-of-day send is
  * for today only.
  */
-export function TodayScreen({ day, today, onDay, onOpen, onSignIn, onSignOut, onEveryoneOut, onImport, clearSearch }: {
+export function TodayScreen({ day, today, onDay, onOpen, onSignIn, onSignOut, onEveryoneOut, onImport, onHandOver, clearSearch }: {
   day: string
   /** Changes whenever the search box should be emptied (after a car was changed). */
   clearSearch: number
@@ -48,6 +48,7 @@ export function TodayScreen({ day, today, onDay, onOpen, onSignIn, onSignOut, on
   onSignOut: () => void
   onEveryoneOut: (count: number) => void
   onImport: () => void
+  onHandOver: () => void
 }) {
   const notify = useToast()
   const [showOut, setShowOut] = useState(false)
@@ -130,6 +131,7 @@ export function TodayScreen({ day, today, onDay, onOpen, onSignIn, onSignOut, on
       <div className="button-row">
         <button type="button" className="btn" onClick={onImport}>Import sheet</button>
         <button type="button" className="btn" onClick={exportPdf} disabled={visits.length === 0}>Export PDF</button>
+        {isToday && <button type="button" className="btn" onClick={onHandOver}>Hand over</button>}
         {isToday && <button type="button" className="btn" onClick={sendToday} disabled={visits.length === 0}>Send end of day</button>}
       </div>
 
