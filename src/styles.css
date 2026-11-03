@@ -43,12 +43,14 @@ h2 { font-size: 15px; margin: 0; text-transform: uppercase; letter-spacing: 0.04
 
 .app { min-height: 100dvh; padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
 .screen { padding: calc(14px + env(safe-area-inset-top)) 16px 150px; max-width: 640px; margin: 0 auto; }
-.screen-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.screen-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.screen-header > div { min-width: 0; }
+h1 { line-height: 1.15; }
 .muted { color: var(--muted); font-size: 14px; }
 .hint { color: var(--muted); font-size: 14px; margin: 6px 0 14px; }
 .empty { color: var(--muted); text-align: center; padding: 28px 8px; }
 section { margin-top: 18px; }
-.section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.section-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
 
 .search, .field input {
   width: 100%; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius);
@@ -61,11 +63,13 @@ section { margin-top: 18px; }
 .visit { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; background: none; border: 0; text-align: left; }
 .visit-who { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 .visit-who > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.visit-time { font-variant-numeric: tabular-nums; color: var(--muted); }
-.day-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; }
+.visit-time { font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; flex: none; }
+.day-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; }
+.day-row-buttons { display: flex; gap: 6px; flex: none; }
+.day-count { display: block; color: var(--muted); font-size: 14px; font-weight: 400; }
 
 .plate {
-  display: inline-block; min-width: 92px; padding: 4px 8px; border-radius: 6px; background: var(--plate);
+  display: inline-block; flex: none; min-width: 92px; padding: 4px 8px; border-radius: 6px; background: var(--plate);
   color: #111; font-weight: 700; letter-spacing: 0.05em; text-align: center; font-variant-numeric: tabular-nums;
 }
 .plate.big { font-size: 26px; padding: 6px 14px; margin-bottom: 8px; }
@@ -82,18 +86,21 @@ section { margin-top: 18px; }
 .btn.huge { font-size: 20px; padding: 18px; }
 .link { background: none; border: 0; color: var(--brand); font-weight: 600; padding: 4px; }
 .button-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.backup .button-row { margin-top: 4px; }
 
-.in-out { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.in-out { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
 .in-out .btn { padding: 18px 10px; font-size: 20px; }
 .btn.out { background: var(--danger); border-color: var(--danger); color: #fff; }
 .out-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.out-row .visit-who { min-width: 0; }
+.out-row .btn { flex: none; }
 .out-row .btn { padding: 10px 18px; font-size: 17px; }
 
 .tabs {
   position: fixed; left: 0; right: 0; bottom: 0; display: flex; background: var(--card);
   border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); z-index: 5;
 }
-.tabs button { flex: 1; padding: 14px 4px; background: none; border: 0; color: var(--muted); font-weight: 600; }
+.tabs button { flex: 1; padding: 15px 4px; background: none; border: 0; color: var(--muted); font-weight: 600; white-space: nowrap; }
 .tabs button.on { color: var(--brand); }
 
 .sheet-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.35); z-index: 10; display: flex; align-items: flex-end; justify-content: center; }
@@ -101,17 +108,21 @@ section { margin-top: 18px; }
   width: 100%; max-width: 640px; max-height: 100dvh; height: calc(100dvh - env(safe-area-inset-top) - 10px);
   background: var(--bg); border-radius: 16px 16px 0 0; display: flex; flex-direction: column;
 }
-.sheet-header { display: grid; grid-template-columns: 80px 1fr 80px; align-items: center; padding: 12px 10px; border-bottom: 1px solid var(--line); }
-.sheet-header h2 { text-align: center; text-transform: none; letter-spacing: 0; color: var(--text); font-size: 17px; }
+.sheet-header { display: grid; grid-template-columns: 76px minmax(0, 1fr) 76px; gap: 8px; align-items: center; padding: 12px 10px; border-bottom: 1px solid var(--line); }
+.sheet-header h2 { text-align: center; text-transform: none; letter-spacing: 0; color: var(--text); font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sheet-header .link { justify-self: start; }
 .sheet-body { overflow-y: auto; padding: 16px 16px calc(24px + env(safe-area-inset-bottom)); flex: 1; }
 
 .field { display: block; margin-bottom: 14px; }
 .field > span { display: block; font-size: 14px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
-.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.row2 > * { min-width: 0; }
+/* iPhone draws date and time boxes wider than asked unless told not to. */
+input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: none; min-width: 0; max-width: 100%; min-height: 46px; }
 .reg-input { font-size: 26px !important; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-.time-row { display: flex; gap: 8px; align-items: stretch; }
-.time-row input { flex: 1; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); color: var(--text); }
+.reg-input::placeholder { font-size: 17px; font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--muted); }
+.time-row { display: flex; gap: 8px; align-items: stretch; flex-wrap: wrap; }
+.time-row input { flex: 1 1 150px; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--card); color: var(--text); }
 
 .chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
 .chip { padding: 8px 16px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); font-weight: 600; }
@@ -124,7 +135,7 @@ section { margin-top: 18px; }
 .tag { font-size: 12px; font-weight: 700; color: var(--ok); text-transform: uppercase; }
 .none-of-these { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; color: var(--muted); margin: -4px 0 14px; }
 
-.notice { background: var(--accent); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.notice { background: var(--accent); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; line-height: 1.4; }
 .notice.warn { background: var(--warn-bg); border: 1px solid var(--warn-line); }
 .known { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 14px; }
 .known-tag { color: var(--ok); font-size: 13px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
@@ -139,14 +150,20 @@ section { margin-top: 18px; }
 .paste { font-family: ui-monospace, Menlo, monospace; font-size: 16px; resize: vertical; }
 .list.compact .day-row { padding: 8px 12px; gap: 8px; }
 .list.compact .plate { min-width: 84px; margin-right: 6px; font-size: 14px; }
-.screen .button-row { margin-bottom: 12px; }
+.screen .button-row { margin-bottom: 14px; }
+.screen > .search { display: block; margin-bottom: 14px; }
+/* Today's smaller actions: an even two-column grid instead of a ragged wrap */
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+.actions .btn { width: 100%; min-width: 0; white-space: normal; line-height: 1.2; }
 
 .install-hint { display: flex; gap: 10px; align-items: flex-start; background: var(--warn-bg); padding: calc(10px + env(safe-area-inset-top)) 16px 10px; font-size: 14px; }
 
 .toast {
-  position: fixed; left: 16px; right: 16px; bottom: calc(150px + env(safe-area-inset-bottom)); z-index: 20;
+  /* At the top, so it never sits on a field or a button the user is about to tap. */
+  position: fixed; left: 16px; right: 16px; top: calc(10px + env(safe-area-inset-top)); z-index: 30;
   max-width: 600px; margin: 0 auto; padding: 12px 16px; border-radius: var(--radius);
-  background: #15181d; color: #fff; font-weight: 600; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  background: #15181d; color: #fff; font-weight: 600; font-size: 15px; line-height: 1.35;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
 .toast.error { background: var(--danger); }
 
@@ -161,7 +178,7 @@ section { margin-top: 18px; }
   background: var(--card); color: var(--text);
 }
 .btn.danger-solid { background: var(--danger); border-color: var(--danger); color: #fff; align-self: flex-start; }
-.end-of-day { margin-top: 4px; }
+.end-of-day { margin-top: 0; }
 .backup h2, section > h2 { margin-bottom: 8px; }
 
 .pick { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; padding: 4px 0; cursor: pointer; }
@@ -169,24 +186,37 @@ section { margin-top: 18px; }
 .day-row.picked { background: var(--accent); }
 .share-bar {
   position: fixed; left: 0; right: 0; bottom: calc(52px + env(safe-area-inset-bottom)); z-index: 6;
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 10px 16px; background: var(--card); border-top: 1px solid var(--line);
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
 }
-.share-bar .btn { padding: 12px 18px; }
+.share-bar .btn { padding: 12px 16px; }
+.share-bar > span:first-child { white-space: nowrap; font-weight: 600; }
 .link:disabled { opacity: 0.4; }
 .tab-name { display: block; font-size: 13px; }
 .tab-note { display: block; font-size: 13px; color: var(--danger); }
 
-.day-nav { display: grid; grid-template-columns: 52px 1fr 52px; gap: 8px; margin-bottom: 10px; }
-.day-nav .btn { font-size: 24px; padding: 6px 0; }
+.day-nav { display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; gap: 8px; align-items: stretch; margin-bottom: 14px; }
+.day-nav .btn { min-width: 0; height: 48px; padding: 0; font-size: 24px; line-height: 1; display: flex; align-items: center; justify-content: center; }
 .day-nav input {
-  width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius);
-  background: var(--card); color: var(--text); font: inherit; font-size: 17px; text-align: center;
+  display: block; width: 100%; min-width: 0; height: 48px; margin: 0; padding: 0 10px;
+  -webkit-appearance: none; appearance: none;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--card); color: var(--text); font: inherit; font-size: 17px; font-weight: 600; text-align: center;
 }
-.past-day { flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.day-nav input::-webkit-date-and-time-value { text-align: center; }
+.past-day { flex-direction: row; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
 .share-bar-buttons { display: flex; gap: 8px; }
-.day-row .btn.small + .btn.small { margin-left: 6px; }
+
 
 .week + .week { margin-top: 18px; padding-top: 14px; border-top: 2px solid var(--line); }
-.week-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-weight: 700; color: var(--muted); font-size: 14px; }
+.week-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; font-weight: 700; color: var(--muted); font-size: 14px; }
+
+/* Small phones (iPhone SE first generation and similar). */
+@media (max-width: 360px) {
+  .plate { min-width: 0; font-size: 15px; padding: 3px 6px; }
+  .in-out .btn { font-size: 18px; padding: 16px 6px; }
+  h1 { font-size: 23px; }
+  .screen { padding-left: 12px; padding-right: 12px; }
+  .share-bar { padding-left: 12px; padding-right: 12px; }
+}

@@ -1,10 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#1f3a5f"/>
-  <rect x="96" y="96" width="320" height="360" rx="28" fill="#ffffff"/>
-  <rect x="176" y="68" width="160" height="64" rx="18" fill="#cfd8e3"/>
-  <rect x="136" y="176" width="240" height="64" rx="10" fill="#ffd400"/>
-  <text x="256" y="222" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="40" text-anchor="middle" fill="#111">IN · OUT</text>
-  <rect x="136" y="276" width="240" height="18" rx="9" fill="#cfd8e3"/>
-  <rect x="136" y="318" width="240" height="18" rx="9" fill="#cfd8e3"/>
-  <rect x="136" y="360" width="160" height="18" rx="9" fill="#cfd8e3"/>
+  <!-- Gatehouse: a raised barrier gate — the one thing every vehicle passes. -->
+  <rect width="512" height="512" rx="112" fill="#1f3a5f"/>
+  <defs>
+    <clipPath id="arm"><rect x="150" y="196" width="310" height="68" rx="34"/></clipPath>
+  </defs>
+  <g transform="translate(-26 18)">
+    <!-- barrier arm, striped, raised -->
+    <g transform="rotate(-22 172 230)">
+      <rect x="150" y="196" width="310" height="68" rx="34" fill="#ffffff"/>
+      <g clip-path="url(#arm)" fill="#e5484d">
+        <rect x="236" y="180" width="46" height="100" transform="skewX(-25)"/>
+        <rect x="330" y="180" width="46" height="100" transform="skewX(-25)"/>
+        <rect x="424" y="180" width="46" height="100" transform="skewX(-25)"/>
+        <rect x="518" y="180" width="46" height="100" transform="skewX(-25)"/>
+      </g>
+    </g>
+    <!-- post -->
+    <rect x="118" y="196" width="104" height="196" rx="20" fill="#ffffff"/>
+    <circle cx="170" cy="240" r="26" fill="#ffd400"/>
+    <!-- road -->
+    <rect x="86" y="382" width="372" height="24" rx="12" fill="#ffd400"/>
+  </g>
 </svg>

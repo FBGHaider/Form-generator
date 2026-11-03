@@ -121,14 +121,14 @@ export function TodayScreen({ day, today, onDay, onOpen, onSignIn, onSignOut, on
         type="search"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search car or name to change it"
+        placeholder="Search car or name"
         autoCapitalize="characters"
         autoComplete="off"
         autoCorrect="off"
         spellCheck={false}
       />
 
-      <div className="button-row">
+      <div className="actions">
         <button type="button" className="btn" onClick={onImport}>Import sheet</button>
         <button type="button" className="btn" onClick={exportPdf} disabled={visits.length === 0}>Export PDF</button>
         {isToday && <button type="button" className="btn" onClick={onHandOver}>Hand over</button>}

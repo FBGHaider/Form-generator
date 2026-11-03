@@ -21,9 +21,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Vehicle Records',
-        short_name: 'Vehicles',
-        description: 'Sign vehicles in and out, export the daily sheet as PDF.',
+        name: 'Gatehouse',
+        short_name: 'Gatehouse',
+        description: 'Gatehouse — sign vehicles in and out at the gate, and keep every day’s sheet.',
         theme_color: '#1f3a5f',
         background_color: '#f4f5f7',
         display: 'standalone',

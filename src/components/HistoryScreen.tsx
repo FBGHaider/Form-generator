@@ -126,7 +126,7 @@ export function HistoryScreen({ onOpenDay }: { onOpenDay: (day: string) => void 
         <div>
           <h1>Past days</h1>
           <div className="muted">Every day is kept on this phone</div>
-          <div className="muted">App version: {__APP_VERSION__}</div>
+          <div className="muted">Gatehouse · version {__APP_VERSION__}</div>
         </div>
       </header>
 
@@ -179,12 +179,14 @@ export function HistoryScreen({ onOpenDay }: { onOpenDay: (day: string) => void 
                   <label className="pick">
                     <input type="checkbox" checked={selected.has(day)} onChange={() => toggle(day)} />
                     <span>
-                      <strong>{weekdayDay(day).split(' ')[0].slice(0, 3)} {longDay(day)}</strong>
-                      <span className="muted"> · {count} vehicles</span>
+                      <strong>{weekdayDay(day).split(' ')[0].slice(0, 3)} {longDay(day).split(' ').slice(0, 2).join(' ')}</strong>
+                      <span className="day-count">{count} vehicles</span>
                     </span>
                   </label>
-                  <button type="button" className="btn small" onClick={() => onOpenDay(day)}>Open</button>
-                  <button type="button" className="btn small" onClick={() => exportDay(day)}>PDF</button>
+                  <span className="day-row-buttons">
+                    <button type="button" className="btn small" onClick={() => onOpenDay(day)}>Open</button>
+                    <button type="button" className="btn small" onClick={() => exportDay(day)}>PDF</button>
+                  </span>
                 </li>
               ))}
             </ul>
@@ -200,9 +202,7 @@ export function HistoryScreen({ onOpenDay }: { onOpenDay: (day: string) => void 
           <span>{selected.size} {selected.size === 1 ? 'day' : 'days'}</span>
           <span className="share-bar-buttons">
             <button type="button" className="btn danger-solid" onClick={deleteSelected}>Delete</button>
-            <button type="button" className="btn primary" disabled={sharing} onClick={shareSelected}>
-              Share {selected.size} {selected.size === 1 ? 'PDF' : 'PDFs'}
-            </button>
+            <button type="button" className="btn primary" disabled={sharing} onClick={shareSelected}>Share</button>
           </span>
         </div>
       )}
