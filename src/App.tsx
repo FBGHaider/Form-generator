@@ -57,7 +57,7 @@ export function App() {
       {tab === 'today' && (
         <TodayScreen day={day} onOpen={(v) => setOpenId(v.id)} onEveryoneOut={setEveryoneOut} onImport={() => setImporting(true)} />
       )}
-      {tab === 'master' && <MasterScreen />}
+      {tab === 'master' && <MasterScreen day={day} />}
       {tab === 'history' && <HistoryScreen />}
 
       {tab === 'today' && (

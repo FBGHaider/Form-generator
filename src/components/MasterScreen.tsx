@@ -2,10 +2,10 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useRef, useState } from 'react'
 import { TO_SEE_OPTIONS } from '../config'
 import { db, type Car, type CarDetails } from '../lib/db'
-import { dayKey, displayName, fileDay, normaliseReg, orUnknown } from '../lib/format'
+import { dayKey, displayName, fileDay, normaliseReg, orUnknown, printTime, timeNow } from '../lib/format'
 import type { MasterFileResult } from '../lib/excel'
 import { importCars } from '../lib/master'
-import { deleteCar, saveCar } from '../lib/records'
+import { deleteCar, openVisit, saveCar, signIn } from '../lib/records'
 import { shareFile } from '../lib/share'
 import { DetailsFields } from './DetailsFields'
 import { Sheet } from './Sheet'
@@ -42,19 +42,29 @@ function ImportSheet({ result, onClose }: { result: MasterFileResult; onClose: (
   )
 }
 
-function CarSheet({ car, onClose }: { car: Car | null; onClose: () => void }) {
+function CarSheet({ car, day, onClose }: { car: Car | null; day: string; onClose: () => void }) {
   const notify = useToast()
   const [reg, setReg] = useState(car?.reg ?? '')
   const [details, setDetails] = useState<CarDetails>(
     car ? { firstName: car.firstName, lastName: car.lastName, company: car.company, toSee: car.toSee } :
       { firstName: '', lastName: '', company: '', toSee: TO_SEE_OPTIONS[0] },
   )
+  const [onSiteNow, setOnSiteNow] = useState(false)
+  const [timeIn, setTimeIn] = useState(timeNow())
+  const r = normaliseReg(reg)
+  const alreadyIn = useLiveQuery(() => (r ? openVisit(r, day) : undefined), [r, day])
+
   const save = async () => {
     try {
-      const r = normaliseReg(reg)
       if (!car && (await db.cars.get(r))) throw new Error(`${r} is already in the master list`)
-      await saveCar(r, details)
-      notify(`${r} saved`)
+      if (onSiteNow && !alreadyIn) {
+        // Signing in also saves the details to the master list.
+        await signIn(r, details, day, timeIn)
+        notify(`${r} saved and signed in at ${printTime(timeIn)}`)
+      } else {
+        await saveCar(r, details)
+        notify(`${r} saved`)
+      }
       onClose()
     } catch (e) {
       notify(errorText(e), 'error')
@@ -70,7 +80,24 @@ function CarSheet({ car, onClose }: { car: Car | null; onClose: () => void }) {
           </label>
         )}
         <DetailsFields value={details} onChange={setDetails} />
-        <button type="submit" className="btn primary block">Save</button>
+        {alreadyIn ? (
+          <div className="notice">On site now — signed in at {printTime(alreadyIn.timeIn)}.</div>
+        ) : (
+          <div className="field">
+            <span>On site right now?</span>
+            <div className="chips">
+              <button type="button" className={onSiteNow ? 'chip on' : 'chip'} onClick={() => { setOnSiteNow(true); setTimeIn(timeNow()) }}>Yes</button>
+              <button type="button" className={onSiteNow ? 'chip' : 'chip on'} onClick={() => setOnSiteNow(false)}>No</button>
+            </div>
+            {onSiteNow && (
+              <div className="time-row">
+                <input type="time" value={timeIn} onChange={(e) => setTimeIn(e.target.value)} required aria-label="Time in" />
+                <button type="button" className="btn" onClick={() => setTimeIn(timeNow())}>Now</button>
+              </div>
+            )}
+          </div>
+        )}
+        <button type="submit" className="btn primary block">{onSiteNow && !alreadyIn ? 'Save and sign in' : 'Save'}</button>
         {car && (
           <button type="button" className="btn danger block" onClick={async () => {
             if (!confirm(`Delete ${car.reg} from the master list? Past sheets are not changed.`)) return
@@ -84,7 +111,7 @@ function CarSheet({ car, onClose }: { car: Car | null; onClose: () => void }) {
   )
 }
 
-export function MasterScreen() {
+export function MasterScreen({ day }: { day: string }) {
   const notify = useToast()
   const file = useRef<HTMLInputElement>(null)
   const [q, setQ] = useState('')
@@ -157,7 +184,7 @@ export function MasterScreen() {
       )}
 
       {importing && <ImportSheet result={importing} onClose={() => setImporting(null)} />}
-      {editing !== undefined && <CarSheet car={editing} onClose={() => setEditing(undefined)} />}
+      {editing !== undefined && <CarSheet car={editing} day={day} onClose={() => setEditing(undefined)} />}
     </main>
   )
 }
