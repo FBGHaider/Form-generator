@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { RecordsDb } from './db'
 import {
-  daysWithVisits, findCar, openVisit, rankByReg, signIn, signOut, signOutEveryone, suggestCars, updateVisit, visitsFor,
+  daysWithVisits, findCar, openVisit, rankByReg, setDriverName, signIn, signOut, signOutEveryone, suggestCars, updateVisit, visitsFor,
 } from './records'
 
 const DAY = '2026-10-28'
@@ -87,5 +87,22 @@ describe('records', () => {
     await signIn('AAA1', tom, DAY, '07:00', db)
     await signIn('BBB2', tom, DAY, '07:00', db)
     expect(await daysWithVisits(db)).toEqual([{ day: DAY, count: 2 }, { day: '2026-10-27', count: 1 }])
+  })
+
+  it('fills in a last name in the master list and on that day\'s sheet', async () => {
+    await signIn('DN75WAE', tom, DAY, '07:00', db)
+    await signIn('MT70SRZ', tom, DAY, '07:00', db)
+    await signIn('DN75WAE', tom, '2026-10-27', '07:00', db)
+    await setDriverName('dn75wae', 'Tom', ' Ankrett ', DAY, db)
+    expect(await findCar('DN75WAE', db)).toMatchObject({ firstName: 'Tom', lastName: 'Ankrett', company: 'Spencer' })
+    const today = await visitsFor(DAY, db)
+    expect(today.find((v) => v.reg === 'DN75WAE')!.lastName).toBe('Ankrett')
+    expect(today.find((v) => v.reg === 'MT70SRZ')!.lastName).toBe('')
+    // an earlier day's printed sheet is left as it was
+    expect((await visitsFor('2026-10-27', db))[0].lastName).toBe('')
+  })
+
+  it('needs a last name to save', async () => {
+    await expect(setDriverName('DN75WAE', 'Tom', '  ', DAY, db)).rejects.toThrow(/last name/)
   })
 })

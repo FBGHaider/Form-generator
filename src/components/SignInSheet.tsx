@@ -5,6 +5,7 @@ import { db, type Car, type CarDetails, type Visit } from '../lib/db'
 import { displayName, normaliseReg, orUnknown, printTime, timeNow } from '../lib/format'
 import { signIn, suggestCars } from '../lib/records'
 import { DetailsFields } from './DetailsFields'
+import { MissingName } from './MissingName'
 import { Sheet } from './Sheet'
 import { errorText, useToast } from './Toast'
 
@@ -155,6 +156,8 @@ export function SignInSheet({ day, onClose, onOpenVisit }: {
               ))}
               <button type="button" className="link" onClick={() => setEditing(true)}>Edit details</button>
             </div>
+            <MissingName key={reg} reg={reg} firstName={details.firstName} lastName={details.lastName} day={day}
+              onSaved={(firstName, lastName) => setDetails({ ...details, firstName, lastName })} />
           </div>
         )}
 

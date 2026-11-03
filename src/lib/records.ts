@@ -133,3 +133,25 @@ export async function daysWithVisits(db: RecordsDb = defaultDb): Promise<{ day: 
     .map(([day, count]) => ({ day, count }))
     .sort((a, b) => (a.day < b.day ? 1 : -1))
 }
+
+/**
+ * Fill in a driver's name once it is known: in the master list, and on every
+ * row for that car on `day`, so that day's sheet prints the full name too.
+ * Other details are kept as they are.
+ */
+export async function setDriverName(
+  reg: string,
+  firstName: string,
+  lastName: string,
+  day: string,
+  db: RecordsDb = defaultDb,
+): Promise<void> {
+  const r = normaliseReg(reg)
+  const name = { firstName: firstName.trim(), lastName: lastName.trim() }
+  if (!name.lastName) throw new Error('Type the last name first')
+  await db.transaction('rw', db.cars, db.visits, async () => {
+    const car = await db.cars.get(r)
+    await db.cars.put({ reg: r, company: '', toSee: '', ...car, ...name, updatedAt: Date.now() })
+    await db.visits.where('day').equals(day).filter((v) => v.reg === r).modify(name)
+  })
+}

@@ -4,6 +4,7 @@ import { db, type CarDetails } from '../lib/db'
 import { displayName, orUnknown, printTime, timeNow } from '../lib/format'
 import { deleteVisit, signOut, updateVisit } from '../lib/records'
 import { DetailsFields } from './DetailsFields'
+import { MissingName } from './MissingName'
 import { Sheet } from './Sheet'
 import { errorText, useToast } from './Toast'
 
@@ -73,6 +74,7 @@ export function VisitSheet({ id, onClose }: { id: number; onClose: () => void })
         <div className="known-meta">
           In {printTime(visit.timeIn)}{onSite ? ' · on site now' : ` · out ${printTime(visit.timeOut)}`}
         </div>
+        <MissingName key={visit.reg} reg={visit.reg} firstName={visit.firstName} lastName={visit.lastName} day={visit.day} />
       </div>
       {onSite && (
         <button type="button" className="btn primary block huge" onClick={() => {
