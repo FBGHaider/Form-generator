@@ -1,6 +1,6 @@
 import type { CarDetails, RecordsDb, Visit } from './db'
 import { db as defaultDb } from './db'
-import { dayKey, normaliseReg } from './format'
+import { dayKey, longDay, normaliseReg } from './format'
 import { detail, key, looksLikeReg, matchHeader, text } from './master'
 
 /** One row of a day's sheet, as written in Excel. */
@@ -110,14 +110,18 @@ export interface DayImportResult {
  * time out written in since is filled in.
  *
  * The master list is kept as the better source of who a car belongs to: a
- * row only fills in details the master list does not have, and cars not in
- * the master list are added to it.
+ * row only fills in details the master list does not have, and (unless
+ * `updateMaster` is false) cars not in the master list are added to it.
  */
 export async function importDaySheet(
   day: string,
   entries: SheetEntry[],
   db: RecordsDb = defaultDb,
+  options: { updateMaster?: boolean } = {},
 ): Promise<DayImportResult> {
+  // Old sheets carry typo plates and old spellings that were cleaned out of
+  // the master list, so importing a past day leaves the master list alone.
+  const updateMaster = options.updateMaster ?? true
   const result: DayImportResult = { added: 0, alreadyIn: 0, signedOut: 0, onSiteAlready: [], noTimeIn: 0, newCars: [] }
   const fields = ['firstName', 'lastName', 'company', 'toSee'] as const
 
@@ -134,8 +138,10 @@ export async function importDaySheet(
       // Master list: add new cars, fill in what it is missing, never overwrite.
       const car = await db.cars.get(e.reg)
       const details = Object.fromEntries(fields.map((f) => [f, car?.[f] || e[f]])) as unknown as CarDetails
-      if (!car) result.newCars.push(e.reg)
-      if (!car || fields.some((f) => !car[f] && e[f])) await db.cars.put({ reg: e.reg, ...details, updatedAt: now })
+      if (updateMaster) {
+        if (!car) result.newCars.push(e.reg)
+        if (!car || fields.some((f) => !car[f] && e[f])) await db.cars.put({ reg: e.reg, ...details, updatedAt: now })
+      }
 
       if (!e.timeIn) {
         result.noTimeIn++
@@ -161,4 +167,40 @@ export async function importDaySheet(
     }
   })
   return result
+}
+
+export interface DayTab {
+  sheet: string
+  /** The day this tab is for, or null when neither its name nor its "Date:" line says. */
+  day: string | null
+  /** Set when the tab name and the "Date:" line disagree; the tab name is used. */
+  dateNote?: string
+  entries: SheetEntry[]
+  /** Rows with a time in — the ones that will be imported. */
+  signedIn: number
+}
+
+/**
+ * Every tab of a workbook of daily sheets, with the day it is for. The tab
+ * name wins over the "Date:" line, because a tab is often copied from the day
+ * before and its Date line left unchanged. Tabs that are not day sheets (no
+ * Registration or Time in column) are left out.
+ */
+export function readDayTabs(book: { sheet: string; data: unknown[][] }[]): DayTab[] {
+  const tabs: DayTab[] = []
+  for (const { sheet, data } of book) {
+    let parsed: DaySheet
+    try {
+      parsed = parseDaySheet(data)
+    } catch {
+      continue
+    }
+    const fromName = findDay(sheet)
+    const day = fromName ?? parsed.day
+    const dateNote = fromName && parsed.day && fromName !== parsed.day
+      ? `The tab is named ${sheet} but its Date line says ${longDay(parsed.day)}; using the tab name.`
+      : undefined
+    tabs.push({ sheet, day, dateNote, entries: parsed.entries, signedIn: parsed.entries.filter((e) => e.timeIn).length })
+  }
+  return tabs
 }

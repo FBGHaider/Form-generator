@@ -1,62 +1,88 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useRef, useState } from 'react'
 import { db } from '../lib/db'
-import { findDay, importDaySheet, parseDaySheet, parsePastedRows, type DaySheet } from '../lib/daySheet'
+import { importDaySheet, parseDaySheet, parsePastedRows, readDayTabs, type DaySheet, type DayTab } from '../lib/daySheet'
 import { displayName, longDay, printTime } from '../lib/format'
 import { Sheet } from './Sheet'
 import { errorText, useToast } from './Toast'
 
-type Book = { sheet: string; data: unknown[][] }[]
-
-/** The sheet for `day` in a workbook of daily sheets, or else the last one. */
-function pickSheet(book: Book, day: string): number {
-  const i = book.findIndex((s) => findDay(s.sheet) === day || findDay(String(s.data[0]?.[0] ?? '')) === day)
-  return i === -1 ? book.length - 1 : i
-}
+type Tab = DayTab & { key: string; label: string }
 
 /**
- * Bring a day's sheet kept in Excel into the app: from the .xlsx file, or
- * from rows copied in Excel and pasted here.
+ * Bring days kept in Excel into the app. Pick one or more workbooks and every
+ * day tab in them is listed — each goes onto its own date (today's onto
+ * Today, older ones under Past days). Or paste one day's rows copied from
+ * Excel. Rows with a time in are imported; importing again adds nothing twice.
  */
 export function ImportDaySheet({ today, onClose }: { today: string; onClose: () => void }) {
   const notify = useToast()
   const file = useRef<HTMLInputElement>(null)
-  const [book, setBook] = useState<Book | null>(null)
-  const [sheetIndex, setSheetIndex] = useState(0)
+  const [tabs, setTabs] = useState<Tab[] | null>(null)
+  const [picked, setPicked] = useState<Set<string>>(new Set())
   const [pasted, setPasted] = useState('')
-  const [parsed, setParsed] = useState<DaySheet | null>(null)
+  const [single, setSingle] = useState<DaySheet | null>(null)
   const [busy, setBusy] = useState(false)
 
-  const read = (rows: unknown[][]) => {
-    try {
-      setParsed(parseDaySheet(rows))
-    } catch (e) {
-      setParsed(null)
-      notify(errorText(e), 'error')
-    }
-  }
-
-  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]
+  const onFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = [...(e.target.files ?? [])]
     e.target.value = ''
-    if (!f) return
+    if (files.length === 0) return
     try {
       const { readWorkbook } = await import('../lib/excel')
-      const b = await readWorkbook(f)
-      if (b.length === 0) throw new Error('The file has no sheets.')
-      const i = pickSheet(b, today)
-      setBook(b)
-      setSheetIndex(i)
-      read(b[i].data)
+      const all: Tab[] = []
+      for (const f of files) {
+        for (const t of readDayTabs(await readWorkbook(f))) {
+          all.push({ ...t, key: `${f.name}/${t.sheet}`, label: files.length > 1 ? `${f.name} · ${t.sheet}` : t.sheet })
+        }
+      }
+      if (all.length === 0) throw new Error('No day sheets found (a day sheet has Registration and Time in columns).')
+      // Oldest first; tick every tab that has a date and someone signed in.
+      all.sort((a, b) => (a.day ?? '9').localeCompare(b.day ?? '9'))
+      setTabs(all)
+      setPicked(new Set(all.filter((t) => t.day && t.signedIn > 0).map((t) => t.key)))
     } catch (err) {
       notify(`Could not read that file: ${errorText(err)}`, 'error')
     }
   }
 
-  const day = parsed?.day ?? (book ? findDay(book[sheetIndex].sheet) : null) ?? today
-  const timed = parsed?.entries.filter((e) => e.timeIn) ?? []
-  const out = timed.filter((e) => e.timeOut).length
-  // Show the name that will be saved: the master list's, where it has one.
+  const toggle = (key: string) =>
+    setPicked((s) => {
+      const next = new Set(s)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+
+  const importTabs = async () => {
+    if (!tabs) return
+    setBusy(true)
+    try {
+      const chosen = tabs.filter((t) => picked.has(t.key) && t.day)
+      let added = 0
+      let already = 0
+      let out = 0
+      const days = new Set<string>()
+      for (const t of chosen) {
+        const r = await importDaySheet(t.day!, t.entries, db, { updateMaster: t.day === today })
+        added += r.added
+        already += r.alreadyIn
+        out += r.signedOut
+        days.add(t.day!)
+      }
+      const parts = [`${days.size} ${days.size === 1 ? 'day' : 'days'}: ${added} signed in`]
+      if (out) parts.push(`${out} signed out`)
+      if (already) parts.push(`${already} already there`)
+      notify(parts.join(' · '))
+      onClose()
+    } catch (e) {
+      notify(errorText(e), 'error')
+      setBusy(false)
+    }
+  }
+
+  // ---- one day pasted ------------------------------------------------------
+  const day = single?.day ?? today
+  const timed = single?.entries.filter((e) => e.timeIn) ?? []
   const known = useLiveQuery(
     async () => new Map((await db.cars.bulkGet(timed.map((e) => e.reg))).filter((c) => !!c).map((c) => [c!.reg, c!])),
     [timed.map((e) => e.reg).join()],
@@ -65,12 +91,11 @@ export function ImportDaySheet({ today, onClose }: { today: string; onClose: () 
     const c = known?.get(e.reg)
     return displayName(c?.firstName || e.firstName, c?.firstName ? c.lastName : e.lastName)
   }
-
-  const go = async () => {
-    if (!parsed) return
+  const importPasted = async () => {
+    if (!single) return
     setBusy(true)
     try {
-      const r = await importDaySheet(day, parsed.entries)
+      const r = await importDaySheet(day, single.entries, db, { updateMaster: day === today })
       const parts = [`${r.added} signed in`]
       if (r.signedOut) parts.push(`${r.signedOut} signed out`)
       if (r.alreadyIn) parts.push(`${r.alreadyIn} already there`)
@@ -83,49 +108,78 @@ export function ImportDaySheet({ today, onClose }: { today: string; onClose: () 
       setBusy(false)
     }
   }
+  const readPasted = () => {
+    try {
+      setSingle(parseDaySheet(parsePastedRows(pasted)))
+    } catch (e) {
+      notify(errorText(e), 'error')
+    }
+  }
+
+  const pickedTabs = tabs?.filter((t) => picked.has(t.key) && t.day) ?? []
+  const pickedDays = new Set(pickedTabs.map((t) => t.day)).size
 
   return (
     <Sheet title="Import sheet" onClose={onClose}>
-      {!parsed && (
+      {!tabs && !single && (
         <>
           <p className="hint">
-            Bring in a day you kept in Excel. Rows with a time in are signed in at that time; rows without one are
-            left off. You can import again later — nothing is added twice.
+            Bring in days kept in Excel — today's, or any number of past days. Each tab goes onto its own date; older
+            days appear under Past days. Rows with a time in are imported; rows without one are left off. Importing
+            the same file again adds nothing twice.
           </p>
-          <button type="button" className="btn primary block" onClick={() => file.current?.click()}>Choose Excel file</button>
-          <input ref={file} type="file" hidden accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={onFile} />
+          <button type="button" className="btn primary block" onClick={() => file.current?.click()}>Choose Excel files</button>
+          <input ref={file} type="file" hidden multiple accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={onFiles} />
           <div className="or">or</div>
           <label className="field">
-            <span>Paste rows copied from Excel (include the heading row)</span>
+            <span>Paste one day's rows copied from Excel (include the heading row)</span>
             <textarea className="paste" value={pasted} onChange={(e) => setPasted(e.target.value)} rows={6}
               placeholder={'First Name\tLast name\tCompany\tTo see\tTime in\tTime out\tRegistration\n…'} />
           </label>
-          <button type="button" className="btn block" disabled={!pasted.trim()} onClick={() => read(parsePastedRows(pasted))}>
-            Read pasted rows
-          </button>
+          <button type="button" className="btn block" disabled={!pasted.trim()} onClick={readPasted}>Read pasted rows</button>
         </>
       )}
 
-      {parsed && (
+      {tabs && (
         <>
-          {book && book.length > 1 && (
-            <label className="field">
-              <span>Sheet</span>
-              <select value={sheetIndex} onChange={(e) => { const i = Number(e.target.value); setSheetIndex(i); read(book[i].data) }}>
-                {book.map((s, i) => <option key={s.sheet + i} value={i}>{s.sheet}</option>)}
-              </select>
-            </label>
-          )}
+          <div className="section-head">
+            <span className="muted">{tabs.length} {tabs.length === 1 ? 'sheet' : 'sheets'} found</span>
+            <button type="button" className="link" onClick={() => setPicked(picked.size ? new Set() : new Set(tabs.filter((t) => t.day).map((t) => t.key)))}>
+              {picked.size ? 'Untick all' : 'Tick all'}
+            </button>
+          </div>
+          <ul className="list">
+            {tabs.map((t) => (
+              <li key={t.key} className={picked.has(t.key) ? 'day-row picked' : 'day-row'}>
+                <label className="pick">
+                  <input type="checkbox" disabled={!t.day} checked={picked.has(t.key)} onChange={() => toggle(t.key)} />
+                  <span>
+                    <strong>{t.day ? longDay(t.day) : 'No date'}</strong>
+                    <span className="muted"> · {t.signedIn} signed in{t.day === today ? ' · today' : ''}</span>
+                    {t.label !== (t.day ? longDay(t.day) : '') && <span className="muted tab-name">Tab: {t.label}</span>}
+                    {t.dateNote && <span className="tab-note">{t.dateNote}</span>}
+                    {!t.day && <span className="tab-note">No date in the tab name or a Date line — left out.</span>}
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+          <button type="button" className="btn primary block" disabled={busy || pickedDays === 0} onClick={importTabs}>
+            Import {pickedDays} {pickedDays === 1 ? 'day' : 'days'}
+          </button>
+          <button type="button" className="btn block" onClick={() => setTabs(null)}>Choose something else</button>
+        </>
+      )}
+
+      {single && (
+        <>
           <p>
-            <strong>{timed.length}</strong> signed in{out > 0 && <>, {out} of them already out</>}, for{' '}
-            <strong>{longDay(day)}</strong>.
-            {parsed.entries.length > timed.length && (
-              <span className="muted"> {parsed.entries.length - timed.length} rows have no time in and are left off.</span>
+            <strong>{timed.length}</strong> signed in, for <strong>{longDay(day)}</strong>.
+            {single.entries.length > timed.length && (
+              <span className="muted"> {single.entries.length - timed.length} rows have no time in and are left off.</span>
             )}
           </p>
-          {day !== today && (
-            <div className="notice warn">This sheet is for {longDay(day)}, not today. It will go under Past days.</div>
-          )}
+          {day !== today && <div className="notice warn">This is for {longDay(day)}, not today. It will go under Past days.</div>}
           <ul className="list compact">
             {timed.map((e) => (
               <li key={e.reg + e.timeIn} className="day-row">
@@ -134,10 +188,10 @@ export function ImportDaySheet({ today, onClose }: { today: string; onClose: () 
               </li>
             ))}
           </ul>
-          <button type="button" className="btn primary block" disabled={busy || timed.length === 0} onClick={go}>
+          <button type="button" className="btn primary block" disabled={busy || timed.length === 0} onClick={importPasted}>
             Add {timed.length} to {day === today ? 'today' : longDay(day)}
           </button>
-          <button type="button" className="btn block" onClick={() => { setParsed(null); setBook(null) }}>Choose something else</button>
+          <button type="button" className="btn block" onClick={() => setSingle(null)}>Choose something else</button>
         </>
       )}
     </Sheet>
