@@ -1,10 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useRef, useState } from 'react'
 import type { BackupContents } from '../lib/backup'
-import { dayKey, longDay } from '../lib/format'
+import { dayKey, longDay, weekStart } from '../lib/format'
 import { lastSentDay, sendBackup } from '../lib/endOfDay'
 import { daysWithVisits, visitsFor } from '../lib/records'
-import { shareFile } from '../lib/share'
+import { shareFile, shareFiles } from '../lib/share'
 import { Sheet } from './Sheet'
 import { errorText, useToast } from './Toast'
 
@@ -41,6 +41,39 @@ export function HistoryScreen() {
   const file = useRef<HTMLInputElement>(null)
   const [restoring, setRestoring] = useState<BackupContents | null>(null)
   const [sent, setSent] = useState(lastSentDay())
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [sharing, setSharing] = useState(false)
+
+  const toggle = (day: string) =>
+    setSelected((s) => {
+      const next = new Set(s)
+      if (next.has(day)) next.delete(day)
+      else next.add(day)
+      return next
+    })
+  const today = dayKey()
+  const monday = weekStart(today)
+  const thisWeek = days.filter((d) => d.day >= monday && d.day <= today).map((d) => d.day)
+
+  /** One PDF per selected day, oldest first, all in one share sheet. */
+  const shareSelected = async () => {
+    const chosen = [...selected].sort()
+    if (chosen.length === 0) return
+    setSharing(true)
+    try {
+      const { dayPdfBlob, pdfFileName } = await import('../lib/pdf')
+      const files = await Promise.all(chosen.map(async (d) => ({ blob: dayPdfBlob(d, await visitsFor(d)), name: pdfFileName(d) })))
+      const title = chosen.length === 1
+        ? `Vehicle Records ${longDay(chosen[0])}`
+        : `Vehicle Records ${longDay(chosen[0])} to ${longDay(chosen[chosen.length - 1])}`
+      const outcome = await shareFiles(files, title)
+      if (outcome !== 'cancelled') setSelected(new Set())
+    } catch (e) {
+      notify(errorText(e), 'error')
+    } finally {
+      setSharing(false)
+    }
+  }
 
   const exportDay = async (day: string) => {
     try {
@@ -96,23 +129,45 @@ export function HistoryScreen() {
       </section>
 
       <section>
-        <h2>Days</h2>
+        <div className="section-head">
+          <h2>Days</h2>
+          {days.length > 0 && (
+            selected.size > 0
+              ? <button type="button" className="link" onClick={() => setSelected(new Set())}>Clear</button>
+              : <button type="button" className="link" disabled={thisWeek.length === 0} onClick={() => setSelected(new Set(thisWeek))}>Select this week</button>
+          )}
+        </div>
         {days.length === 0 ? (
           <p className="empty">Nothing yet.</p>
         ) : (
-          <ul className="list">
-            {days.map(({ day, count }) => (
-              <li key={day} className="day-row">
-                <span>
-                  <strong>{longDay(day)}</strong>
-                  <span className="muted"> · {count} vehicles</span>
-                </span>
-                <button type="button" className="btn small" onClick={() => exportDay(day)}>PDF</button>
-              </li>
-            ))}
-          </ul>
+          <>
+            <p className="hint">Tick the days to send, then tap Share.</p>
+            <ul className="list">
+              {days.map(({ day, count }) => (
+                <li key={day} className={selected.has(day) ? 'day-row picked' : 'day-row'}>
+                  <label className="pick">
+                    <input type="checkbox" checked={selected.has(day)} onChange={() => toggle(day)} />
+                    <span>
+                      <strong>{longDay(day)}</strong>
+                      <span className="muted"> · {count} vehicles</span>
+                    </span>
+                  </label>
+                  <button type="button" className="btn small" onClick={() => exportDay(day)}>PDF</button>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </section>
+
+      {selected.size > 0 && (
+        <div className="share-bar">
+          <span>{selected.size} {selected.size === 1 ? 'day' : 'days'} selected</span>
+          <button type="button" className="btn primary" disabled={sharing} onClick={shareSelected}>
+            Share {selected.size} {selected.size === 1 ? 'PDF' : 'PDFs'}
+          </button>
+        </div>
+      )}
 
       {restoring && <RestoreSheet backup={restoring} onClose={() => setRestoring(null)} />}
     </main>

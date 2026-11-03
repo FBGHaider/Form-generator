@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dayKey, displayName, fileDay, isValidTime, longDay, normaliseReg, orUnknown, printTime, timeNow } from './format'
+import { weekStart, dayKey, displayName, fileDay, isValidTime, longDay, normaliseReg, orUnknown, printTime, timeNow } from './format'
 
 describe('format', () => {
   it('normalises registrations', () => {
@@ -41,5 +41,12 @@ describe('format', () => {
     expect(dayKey(new Date(2026, 9, 28, 23, 59))).toBe('2026-10-28')
     expect(longDay('2026-10-28')).toBe('28 Oct 2026')
     expect(fileDay('2026-10-28')).toBe('28_Oct_2026')
+  })
+
+  it('finds the Monday of a week', () => {
+    expect(weekStart('2026-11-03')).toBe('2026-11-02') // Tuesday
+    expect(weekStart('2026-11-02')).toBe('2026-11-02') // Monday
+    expect(weekStart('2026-11-08')).toBe('2026-11-02') // Sunday
+    expect(weekStart('2026-11-01')).toBe('2026-10-26') // Sunday, the week before
   })
 })
