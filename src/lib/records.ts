@@ -158,21 +158,41 @@ export async function setDriverName(
   })
 }
 
-/** Past days are closed at this time: anyone left signed in is signed out. */
+/** When the working day ends: 17:00, and 15:30 on Fridays. */
 export const END_OF_DAY = '17:00'
+export const FRIDAY_END = '15:30'
+
+export function isFriday(day: string): boolean {
+  const [y, m, d] = day.split('-').map(Number)
+  return new Date(y, m - 1, d).getDay() === 5
+}
+
+/** The end of the working day on `day`: 15:30 on a Friday, 17:00 otherwise. */
+export function endOfDayFor(day: string): string {
+  return isFriday(day) ? FRIDAY_END : END_OF_DAY
+}
+
+/** The time out the app gives someone left signed in: the end of that day, or their time in if later. */
+function closingTime(day: string, timeIn: string): string {
+  const end = endOfDayFor(day)
+  return timeIn > end ? timeIn : end
+}
 
 /**
- * Sign out everyone still signed in on a day before `today`, at 17:00 — or at
- * their time in, for the rare car that came in after 17:00, so time out is
- * never before time in. Today is left alone. Returns how many were signed out.
+ * Sign out everyone still signed in on a day before `today`, at the end of
+ * that day (17:00, or 15:30 on a Friday) — or at their time in, for the rare
+ * car that came in later, so time out is never before time in. Times the app
+ * filled in itself earlier are brought into line too (a Friday closed at 17:00
+ * becomes 15:30); times typed by a person are never changed. Today is left
+ * alone. Returns how many rows were changed.
  */
 export async function closePastDays(today: string, db: RecordsDb = defaultDb): Promise<number> {
   return db.visits
     .where('day')
     .below(today)
-    .filter((v) => v.timeOut === '')
+    .filter((v) => v.timeOut === '' || (v.autoOut === true && v.timeOut !== closingTime(v.day, v.timeIn)))
     .modify((v) => {
-      v.timeOut = v.timeIn > END_OF_DAY ? v.timeIn : END_OF_DAY
+      v.timeOut = closingTime(v.day, v.timeIn)
       v.autoOut = true
     })
 }
