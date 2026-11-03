@@ -1,26 +1,35 @@
+export type ShareOutcome = 'shared' | 'downloaded' | 'cancelled'
+
 /**
- * Hand a file to the user. On iPhone this opens the share sheet, so the file
- * can be saved to Files, printed, emailed or sent on WhatsApp. Where sharing
- * files is not supported, it downloads instead.
+ * Hand files to the user. On iPhone this opens the share sheet, so they can
+ * be emailed (Mail), saved to Files / iCloud Drive, printed or sent on. Where
+ * sharing files is not supported, they are downloaded instead.
  */
-export async function shareFile(blob: Blob, fileName: string): Promise<void> {
-  const file = new File([blob], fileName, { type: blob.type })
-  if (navigator.canShare?.({ files: [file] })) {
+export async function shareFiles(files: { blob: Blob; name: string }[], title?: string): Promise<ShareOutcome> {
+  const list = files.map((f) => new File([f.blob], f.name, { type: f.blob.type }))
+  if (navigator.canShare?.({ files: list })) {
     try {
-      await navigator.share({ files: [file], title: fileName })
-      return
+      await navigator.share({ files: list, title: title ?? list[0]?.name })
+      return 'shared'
     } catch (e) {
       // Closing the share sheet is not an error.
-      if (e instanceof DOMException && e.name === 'AbortError') return
+      if (e instanceof DOMException && e.name === 'AbortError') return 'cancelled'
       // Otherwise fall through to a plain download.
     }
   }
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = fileName
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  for (const f of list) {
+    const url = URL.createObjectURL(f)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = f.name
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  }
+  return 'downloaded'
+}
+
+export async function shareFile(blob: Blob, fileName: string): Promise<ShareOutcome> {
+  return shareFiles([{ blob, name: fileName }])
 }
