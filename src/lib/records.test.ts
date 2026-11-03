@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { RecordsDb } from './db'
 import {
-  closePastDays, daysWithVisits, deleteDays, findCar, openVisit, rankByReg, setDriverName, signIn, signOut, signOutEveryone, suggestCars, updateVisit, visitsFor,
+  closePastDays, daysWithVisits, deleteDays, endOfDayFor, findCar, openVisit, rankByReg, setDriverName, signIn, signOut, signOutEveryone, suggestCars, updateVisit, visitsFor,
 } from './records'
 
 const DAY = '2026-10-28'
@@ -127,5 +127,25 @@ describe('records', () => {
     expect(await deleteDays(['2026-09-22', '2026-09-24'], db)).toBe(3)
     expect((await daysWithVisits(db)).map((d) => d.day)).toEqual([DAY])
     expect(await db.cars.count()).toBe(2)
+  })
+
+  it('Fridays end at 15:30: the right time for leftovers, and old automatic 17:00s are corrected', async () => {
+    expect(endOfDayFor('2026-10-30')).toBe('15:30') // Friday
+    expect(endOfDayFor('2026-10-29')).toBe('17:00') // Thursday
+    const FRI = '2026-10-30'
+    await signIn('AAA1', tom, FRI, '07:00', db)
+    const typed = await signIn('BBB2', tom, FRI, '07:00', db)
+    await signOut(typed.id, '16:10', db) // a person typed this: never changed
+    await signIn('LATE1', tom, FRI, '15:45', db)
+    await signIn('THU1', tom, '2026-10-29', '07:00', db)
+    // A Friday closed earlier at 17:00 by the app, before this rule existed:
+    const old = await signIn('OLD1', tom, FRI, '07:10', db)
+    await db.visits.update(old.id, { timeOut: '17:00', autoOut: true })
+
+    await closePastDays('2026-11-03', db)
+    const fri = Object.fromEntries((await visitsFor(FRI, db)).map((v) => [v.reg, v.timeOut]))
+    expect(fri).toEqual({ AAA1: '15:30', BBB2: '16:10', LATE1: '15:45', OLD1: '15:30' })
+    expect((await visitsFor('2026-10-29', db))[0].timeOut).toBe('17:00')
+    expect(await closePastDays('2026-11-03', db)).toBe(0)
   })
 })
