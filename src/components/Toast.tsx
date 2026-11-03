@@ -9,7 +9,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const notify = useCallback<Notify>((message, kind = 'ok') => {
     window.clearTimeout(timer.current)
     setToast({ message, kind })
-    timer.current = window.setTimeout(() => setToast(null), kind === 'error' ? 5000 : 2500)
+    timer.current = window.setTimeout(() => setToast(null), kind === 'error' ? 5000 : 2000)
   }, [])
   return (
     <ToastContext.Provider value={notify}>

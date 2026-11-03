@@ -19,13 +19,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo.png'],
       manifest: {
-        name: 'Vehicle Records',
-        short_name: 'Vehicles',
-        description: 'Sign vehicles in and out, export the daily sheet as PDF.',
-        theme_color: '#1f3a5f',
-        background_color: '#f4f5f7',
+        name: 'Gatehouse',
+        short_name: 'Gatehouse',
+        description: 'Gatehouse — sign vehicles in and out at the gate, and keep every day’s sheet.',
+        theme_color: '#ffffff',
+        background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '.',
@@ -33,11 +33,12 @@ export default defineConfig({
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+          { src: 'icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        globIgnores: ['**/icon-512.png', '**/icon-maskable-512.png'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
     }),

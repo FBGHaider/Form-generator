@@ -5,6 +5,7 @@ import { displayName, longDay, normaliseReg, orUnknown, printTime, shiftDay, wee
 import { visitsFor } from '../lib/records'
 import { lastSentDay, sendEndOfDay } from '../lib/endOfDay'
 import { shareFile } from '../lib/share'
+import { Logo } from './Brand'
 import { errorText, useToast } from './Toast'
 
 /** A plate matches on any part ("WAE"); a name or company on any part of it. */
@@ -92,9 +93,12 @@ export function TodayScreen({ day, today, onDay, onOpen, onSignIn, onSignOut, on
   return (
     <main className="screen">
       <header className="screen-header">
-        <div>
+        <div className="brand-title">
+          <Logo size={44} />
+          <div>
           <h1>{isToday ? 'Today' : weekdayDay(day)}</h1>
           <div className="muted">{isToday ? `${longDay(day)} · ` : ''}{visits.length} on the sheet</div>
+          </div>
         </div>
       </header>
 
@@ -121,14 +125,14 @@ export function TodayScreen({ day, today, onDay, onOpen, onSignIn, onSignOut, on
         type="search"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search car or name to change it"
+        placeholder="Search car or name"
         autoCapitalize="characters"
         autoComplete="off"
         autoCorrect="off"
         spellCheck={false}
       />
 
-      <div className="button-row">
+      <div className="actions">
         <button type="button" className="btn" onClick={onImport}>Import sheet</button>
         <button type="button" className="btn" onClick={exportPdf} disabled={visits.length === 0}>Export PDF</button>
         {isToday && <button type="button" className="btn" onClick={onHandOver}>Hand over</button>}

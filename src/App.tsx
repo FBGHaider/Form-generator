@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { EveryoneOutSheet } from './components/EveryoneOutSheet'
+import { Logo } from './components/Brand'
 import { HandOverSheet } from './components/HandOverSheet'
 import { HistoryScreen } from './components/HistoryScreen'
 import { ImportDaySheet } from './components/ImportDaySheet'
@@ -37,8 +38,9 @@ function InstallHint() {
   if (hidden) return null
   return (
     <div className="install-hint">
+      <Logo size={36} />
       <span>
-        Add this to your Home Screen so it works with no signal and your data is kept safe:
+        Add Gatehouse to your Home Screen so it works with no signal and your data is kept safe:
         tap <strong>Share</strong> then <strong>Add to Home Screen</strong>.
       </span>
       <button type="button" className="link" onClick={() => setHidden(true)}>OK</button>

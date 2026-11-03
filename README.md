@@ -1,4 +1,6 @@
-# Form Generator — Vehicle Records
+# Gatehouse
+
+Vehicle sign-in for the gate (repository: form-generator).
 
 A small iPhone app for signing vehicles in and out at the gate and printing the
 day's sheet as a PDF. It works with no signal.
