@@ -220,3 +220,9 @@ input[type='date'], input[type='time'] { -webkit-appearance: none; appearance: n
   .screen { padding-left: 12px; padding-right: 12px; }
   .share-bar { padding-left: 12px; padding-right: 12px; }
 }
+
+.logo { display: block; flex: none; border-radius: 22%; background: #fff; box-shadow: 0 0 0 1px var(--line); }
+.brand-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand-title > div { min-width: 0; }
+.brand-line { display: flex; align-items: center; gap: 6px; }
+.install-hint { align-items: center; }

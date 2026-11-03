@@ -5,6 +5,7 @@ import { dayKey, groupByWeek, longDay, weekdayDay, weekLabel, weekStart } from '
 import { lastSentDay, sendBackup } from '../lib/endOfDay'
 import { closePastDays, daysWithVisits, deleteDays, visitsFor } from '../lib/records'
 import { shareFile, shareFiles } from '../lib/share'
+import { Logo } from './Brand'
 import { Sheet } from './Sheet'
 import { errorText, useToast } from './Toast'
 
@@ -126,7 +127,7 @@ export function HistoryScreen({ onOpenDay }: { onOpenDay: (day: string) => void 
         <div>
           <h1>Past days</h1>
           <div className="muted">Every day is kept on this phone</div>
-          <div className="muted">Gatehouse · version {__APP_VERSION__}</div>
+          <div className="muted brand-line"><Logo size={20} /> Gatehouse · version {__APP_VERSION__}</div>
         </div>
       </header>
 

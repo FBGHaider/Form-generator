@@ -5,6 +5,7 @@ import { displayName, longDay, normaliseReg, orUnknown, printTime, shiftDay, wee
 import { visitsFor } from '../lib/records'
 import { lastSentDay, sendEndOfDay } from '../lib/endOfDay'
 import { shareFile } from '../lib/share'
+import { Logo } from './Brand'
 import { errorText, useToast } from './Toast'
 
 /** A plate matches on any part ("WAE"); a name or company on any part of it. */
@@ -92,9 +93,12 @@ export function TodayScreen({ day, today, onDay, onOpen, onSignIn, onSignOut, on
   return (
     <main className="screen">
       <header className="screen-header">
-        <div>
+        <div className="brand-title">
+          <Logo size={44} />
+          <div>
           <h1>{isToday ? 'Today' : weekdayDay(day)}</h1>
           <div className="muted">{isToday ? `${longDay(day)} · ` : ''}{visits.length} on the sheet</div>
+          </div>
         </div>
       </header>
 
