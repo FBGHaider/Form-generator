@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { db, type Visit } from '../lib/db'
 import { displayName, longDay, orUnknown, printTime } from '../lib/format'
 import { visitsFor } from '../lib/records'
+import { lastSentDay, sendEndOfDay } from '../lib/endOfDay'
 import { shareFile } from '../lib/share'
 import { errorText, useToast } from './Toast'
 
@@ -39,6 +40,20 @@ export function TodayScreen({ day, onOpen, onSignIn, onSignOut, onEveryoneOut, o
   const onSite = visits.filter((v) => v.timeOut === '')
   const out = visits.filter((v) => v.timeOut !== '')
 
+  // After 4pm, remind until today's list has been sent.
+  const [sentDay, setSentDay] = useState(lastSentDay())
+  const remind = visits.length > 0 && sentDay !== day && new Date().getHours() >= 16
+
+  const sendToday = async () => {
+    try {
+      const outcome = await sendEndOfDay(day)
+      setSentDay(lastSentDay())
+      if (outcome === 'downloaded') notify('Saved the PDF and the backup file')
+    } catch (e) {
+      notify(errorText(e), 'error')
+    }
+  }
+
   const exportPdf = async () => {
     try {
       const { dayPdfBlob, pdfFileName } = await import('../lib/pdf')
@@ -65,7 +80,15 @@ export function TodayScreen({ day, onOpen, onSignIn, onSignOut, onEveryoneOut, o
       <div className="button-row">
         <button type="button" className="btn" onClick={onImport}>Import sheet</button>
         <button type="button" className="btn" onClick={exportPdf} disabled={visits.length === 0}>Export PDF</button>
+        <button type="button" className="btn" onClick={sendToday} disabled={visits.length === 0}>Send end of day</button>
       </div>
+
+      {remind && (
+        <div className="notice warn end-of-day">
+          <span>End of the day: email yourself today's list and the backup.</span>
+          <button type="button" className="btn primary" onClick={sendToday}>Send now</button>
+        </div>
+      )}
 
       <section>
         <div className="section-head">

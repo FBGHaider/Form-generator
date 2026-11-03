@@ -1,7 +1,8 @@
 import readXlsxFile from 'read-excel-file/browser'
 import writeXlsxFile from 'write-excel-file/browser'
 import { masterRows, mergeSheets, parseMasterRows, sheetsToRead, type MasterParseResult } from './master'
-import type { Car } from './db'
+import type { Car, Visit } from './db'
+import { parseBackup, signInRows } from './backup'
 
 export interface MasterFileResult {
   cars: Omit<Car, 'updatedAt'>[]
@@ -57,4 +58,17 @@ export async function masterToXlsx(cars: Car[]): Promise<Blob> {
 /** Every sheet in an .xlsx file, as rows of cells. */
 export async function readWorkbook(file: File): Promise<{ sheet: string; data: unknown[][] }[]> {
   return (await readXlsxFile(file)).map((s) => ({ sheet: s.sheet, data: s.data as unknown[][] }))
+}
+
+/** Everything on the phone in one file: the master list and every day's sign-ins. */
+export async function backupToXlsx(cars: Car[], visits: Visit[]): Promise<Blob> {
+  const bold = (rows: string[][]) => rows.map((r, i) => r.map((value) => (i === 0 ? { value, fontWeight: 'bold' as const } : { value })))
+  return writeXlsxFile([
+    { sheet: 'Master', data: bold(masterRows(cars)), columns: [{ width: 14 }, { width: 16 }, { width: 16 }, { width: 22 }, { width: 14 }], stickyRowsCount: 1 },
+    { sheet: 'Sign-ins', data: bold(signInRows(visits)), columns: [{ width: 13 }, { width: 14 }, { width: 16 }, { width: 22 }, { width: 12 }, { width: 9 }, { width: 9 }, { width: 14 }], stickyRowsCount: 1 },
+  ]).toBlob()
+}
+
+export async function readBackupFile(file: File) {
+  return parseBackup(await readWorkbook(file))
 }

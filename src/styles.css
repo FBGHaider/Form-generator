@@ -161,3 +161,5 @@ section { margin-top: 18px; }
   background: var(--card); color: var(--text);
 }
 .btn.danger-solid { background: var(--danger); border-color: var(--danger); color: #fff; align-self: flex-start; }
+.end-of-day { margin-top: 4px; }
+.backup h2, section > h2 { margin-bottom: 8px; }
