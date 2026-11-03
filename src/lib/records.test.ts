@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { RecordsDb } from './db'
 import {
-  daysWithVisits, findCar, openVisit, signIn, signOut, signOutEveryone, suggestCars, updateVisit, visitsFor,
+  daysWithVisits, findCar, openVisit, rankByReg, signIn, signOut, signOutEveryone, suggestCars, updateVisit, visitsFor,
 } from './records'
 
 const DAY = '2026-10-28'
@@ -67,6 +67,19 @@ describe('records', () => {
     await signIn('DN75VAO', tom, DAY, '07:00', db)
     await signIn('MT70SRZ', tom, DAY, '07:00', db)
     expect((await suggestCars('dn75', 6, db)).map((c) => c.reg).sort()).toEqual(['DN75VAO', 'DN75WAE'])
+  })
+
+  it('finds a car from the last three characters of its plate', async () => {
+    await signIn('DN75WAE', tom, DAY, '07:00', db)
+    await signIn('MT70SRZ', tom, DAY, '07:00', db)
+    expect((await suggestCars('wae', 6, db)).map((c) => c.reg)).toEqual(['DN75WAE'])
+    expect((await suggestCars('70s', 6, db)).map((c) => c.reg)).toEqual(['MT70SRZ'])
+  })
+
+  it('puts plates that end with what was typed first', () => {
+    const cars = ['AKE123', 'BAKE1', 'XYZAKE', 'AAKE', 'NOPE'].map((reg) => ({ reg }))
+    expect(rankByReg(cars, 'ake').map((c) => c.reg)).toEqual(['AAKE', 'XYZAKE', 'AKE123', 'BAKE1'])
+    expect(rankByReg(cars, '')).toEqual([])
   })
 
   it('lists days newest first with counts', async () => {
