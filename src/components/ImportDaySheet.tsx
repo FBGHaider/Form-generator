@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import { db } from '../lib/db'
 import { importDaySheet, parseDaySheet, parsePastedRows, readDayTabs, type DaySheet, type DayTab } from '../lib/daySheet'
 import { displayName, longDay, printTime } from '../lib/format'
+import { closePastDays } from '../lib/records'
 import { Sheet } from './Sheet'
 import { errorText, useToast } from './Toast'
 
@@ -69,6 +70,7 @@ export function ImportDaySheet({ today, onClose }: { today: string; onClose: () 
         out += r.signedOut
         days.add(t.day!)
       }
+      await closePastDays(today)
       const parts = [`${days.size} ${days.size === 1 ? 'day' : 'days'}: ${added} signed in`]
       if (out) parts.push(`${out} signed out`)
       if (already) parts.push(`${already} already there`)
@@ -96,6 +98,7 @@ export function ImportDaySheet({ today, onClose }: { today: string; onClose: () 
     setBusy(true)
     try {
       const r = await importDaySheet(day, single.entries, db, { updateMaster: day === today })
+      await closePastDays(today)
       const parts = [`${r.added} signed in`]
       if (r.signedOut) parts.push(`${r.signedOut} signed out`)
       if (r.alreadyIn) parts.push(`${r.alreadyIn} already there`)

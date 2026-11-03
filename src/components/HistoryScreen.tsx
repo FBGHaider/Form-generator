@@ -3,7 +3,7 @@ import { useRef, useState } from 'react'
 import type { BackupContents } from '../lib/backup'
 import { dayKey, longDay, weekStart } from '../lib/format'
 import { lastSentDay, sendBackup } from '../lib/endOfDay'
-import { daysWithVisits, visitsFor } from '../lib/records'
+import { closePastDays, daysWithVisits, visitsFor } from '../lib/records'
 import { shareFile, shareFiles } from '../lib/share'
 import { Sheet } from './Sheet'
 import { errorText, useToast } from './Toast'
@@ -17,6 +17,7 @@ function RestoreSheet({ backup, onClose }: { backup: BackupContents; onClose: ()
     try {
       const { restoreBackup } = await import('../lib/backup')
       const r = await restoreBackup(backup)
+      await closePastDays(dayKey())
       notify(`Restored: ${r.carsAdded} cars added, ${r.signInsAdded} sign-ins added across ${r.days} days`)
       onClose()
     } catch (e) {

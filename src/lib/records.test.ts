@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { RecordsDb } from './db'
 import {
-  daysWithVisits, findCar, openVisit, rankByReg, setDriverName, signIn, signOut, signOutEveryone, suggestCars, updateVisit, visitsFor,
+  closePastDays, daysWithVisits, findCar, openVisit, rankByReg, setDriverName, signIn, signOut, signOutEveryone, suggestCars, updateVisit, visitsFor,
 } from './records'
 
 const DAY = '2026-10-28'
@@ -104,5 +104,18 @@ describe('records', () => {
 
   it('needs a last name to save', async () => {
     await expect(setDriverName('DN75WAE', 'Tom', '  ', DAY, db)).rejects.toThrow(/last name/)
+  })
+
+  it('signs out everyone left on past days at 17:00, and leaves today alone', async () => {
+    await signIn('AAA1', tom, '2026-10-27', '07:00', db)
+    const out = await signIn('BBB2', tom, '2026-10-27', '07:00', db)
+    await signOut(out.id, '15:35', db)
+    await signIn('LATE1', tom, '2026-10-27', '18:10', db)
+    await signIn('CCC3', tom, DAY, '07:00', db) // today
+    expect(await closePastDays(DAY, db)).toBe(2)
+    const past = await visitsFor('2026-10-27', db)
+    expect(past.map((v) => `${v.reg} ${v.timeOut}`)).toEqual(['AAA1 17:00', 'BBB2 15:35', 'LATE1 18:10'])
+    expect((await visitsFor(DAY, db))[0].timeOut).toBe('')
+    expect(await closePastDays(DAY, db)).toBe(0)
   })
 })
