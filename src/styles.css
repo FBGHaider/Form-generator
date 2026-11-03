@@ -119,7 +119,10 @@ section { margin-top: 18px; }
 
 .suggestions { list-style: none; padding: 0; margin: -6px 0 14px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
 .suggestions li + li { border-top: 1px solid var(--line); }
-.suggestions button { display: flex; gap: 10px; align-items: center; width: 100%; padding: 10px 12px; background: none; border: 0; text-align: left; }
+.suggestions button { display: flex; gap: 10px; align-items: center; width: 100%; padding: 12px; background: none; border: 0; text-align: left; }
+.suggestion-who { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tag { font-size: 12px; font-weight: 700; color: var(--ok); text-transform: uppercase; }
+.none-of-these { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; color: var(--muted); margin: -4px 0 14px; }
 
 .notice { background: var(--accent); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
 .notice.warn { background: var(--warn-bg); border: 1px solid var(--warn-line); }

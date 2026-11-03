@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { TO_SEE_OPTIONS } from '../config'
 import { db, type Car, type CarDetails, type Visit } from '../lib/db'
 import { displayName, normaliseReg, orUnknown, printTime, timeNow } from '../lib/format'
-import { signIn } from '../lib/records'
+import { signIn, suggestCars } from '../lib/records'
 import { DetailsFields } from './DetailsFields'
 import { Sheet } from './Sheet'
 import { errorText, useToast } from './Toast'
@@ -33,10 +33,11 @@ export function SignInSheet({ day, onClose, onOpenVisit }: {
   const lookup = useLiveQuery(async () => (reg ? (await db.cars.get(reg)) ?? null : null), [reg], 'loading' as const)
   const loading = lookup === 'loading'
   const exact = loading ? undefined : lookup ?? undefined
-  const suggestions = useLiveQuery(
-    () => (reg ? db.cars.where('reg').startsWith(reg).limit(6).toArray() : Promise.resolve([] as Car[])),
-    [reg],
-  ) ?? []
+  const suggestions = useLiveQuery(() => suggestCars(reg), [reg]) ?? []
+  const onSiteRegs = useLiveQuery(
+    async () => new Set((await db.visits.where('day').equals(day).toArray()).filter((v) => v.timeOut === '').map((v) => v.reg)),
+    [day],
+  ) ?? new Set<string>()
   const alreadyIn = useLiveQuery(
     () => (reg ? db.visits.where('day').equals(day).filter((v) => v.reg === reg && v.timeOut === '').first() : undefined),
     [reg, day],
@@ -102,7 +103,7 @@ export function SignInSheet({ day, onClose, onOpenVisit }: {
             autoCorrect="off"
             spellCheck={false}
             enterKeyHint="next"
-            placeholder="DN75WAE"
+            placeholder="Last 3 letters, e.g. WAE"
           />
         </label>
 
@@ -112,7 +113,8 @@ export function SignInSheet({ day, onClose, onOpenVisit }: {
               <li key={c.reg}>
                 <button type="button" onClick={() => pick(c)}>
                   <span className="plate">{c.reg}</span>
-                  <span>{displayName(c.firstName, c.lastName)} · {orUnknown(c.company)}</span>
+                  <span className="suggestion-who">{displayName(c.firstName, c.lastName)} · {orUnknown(c.company)}</span>
+                  {onSiteRegs.has(c.reg) && <span className="tag">on site</span>}
                 </button>
               </li>
             ))}
@@ -127,10 +129,17 @@ export function SignInSheet({ day, onClose, onOpenVisit }: {
         )}
 
         {reg.length >= 2 && !loading && !exact && !isNew && (
-          <div className="notice">
-            <strong>{reg}</strong> is not in your master list.
-            <button type="button" className="btn primary" onClick={addNew}>+ Add new car</button>
-          </div>
+          showSuggestions ? (
+            <div className="none-of-these">
+              None of these?
+              <button type="button" className="link" onClick={addNew}>+ Add {reg} as a new car</button>
+            </div>
+          ) : (
+            <div className="notice">
+              <strong>{reg}</strong> is not in your master list.
+              <button type="button" className="btn primary" onClick={addNew}>+ Add new car</button>
+            </div>
+          )
         )}
 
         {details && exact && !editing && (

@@ -19,11 +19,24 @@ export async function findCar(reg: string, db: RecordsDb = defaultDb): Promise<C
   return r ? db.cars.get(r) : undefined
 }
 
-/** Master cars whose registration starts with what has been typed so far. */
-export async function suggestCars(prefix: string, limit = 6, db: RecordsDb = defaultDb): Promise<Car[]> {
-  const p = normaliseReg(prefix)
-  if (!p) return []
-  return db.cars.where('reg').startsWith(p).limit(limit).toArray()
+/**
+ * Master cars whose registration contains what has been typed — so the last
+ * three characters ("WAE") find DN75WAE. Best matches first: plates that end
+ * with it, then plates that start with it, then the rest; ties alphabetical.
+ */
+export function rankByReg<T extends { reg: string }>(cars: T[], typed: string, limit = 8): T[] {
+  const q = normaliseReg(typed)
+  if (!q) return []
+  const rank = (reg: string) => (reg === q ? 0 : reg.endsWith(q) ? 1 : reg.startsWith(q) ? 2 : 3)
+  return cars
+    .filter((c) => c.reg.includes(q))
+    .sort((a, b) => rank(a.reg) - rank(b.reg) || a.reg.localeCompare(b.reg))
+    .slice(0, limit)
+}
+
+export async function suggestCars(typed: string, limit = 8, db: RecordsDb = defaultDb): Promise<Car[]> {
+  // The master list is a few hundred cars at most, so scanning it is instant.
+  return rankByReg(await db.cars.toArray(), typed, limit)
 }
 
 /** Add or update a car in the master list. */
