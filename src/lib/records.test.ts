@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { RecordsDb } from './db'
 import {
-  closePastDays, daysWithVisits, deleteDays, endOfDayFor, findCar, openVisit, rankByReg, setDriverName, signIn, signOut, signOutEveryone, suggestCars, updateVisit, visitsFor,
+  closePastDays, daysWithVisits, deleteDays, endOfDayFor, findCar, openVisit, rankByReg, setDriverName, signIn, undoSignOut, signOut, signOutEveryone, suggestCars, updateVisit, visitsFor,
 } from './records'
 
 const DAY = '2026-10-28'
@@ -147,5 +147,20 @@ describe('records', () => {
     expect(fri).toEqual({ AAA1: '15:30', BBB2: '16:10', LATE1: '15:45', OLD1: '15:30' })
     expect((await visitsFor('2026-10-29', db))[0].timeOut).toBe('17:00')
     expect(await closePastDays('2026-11-03', db)).toBe(0)
+  })
+
+  it('undoes a sign-out: back on site with the same time in', async () => {
+    const v = await signIn('AAA1', tom, DAY, '07:00', db)
+    await signOut(v.id, '10:15', db)
+    await undoSignOut(v.id, db)
+    expect(await visitsFor(DAY, db)).toMatchObject([{ reg: 'AAA1', timeIn: '07:00', timeOut: '' }])
+    expect(await openVisit('AAA1', DAY, db)).toBeTruthy()
+  })
+
+  it('will not put a car on site twice', async () => {
+    const v = await signIn('AAA1', tom, DAY, '07:00', db)
+    await signOut(v.id, '10:15', db)
+    await signIn('AAA1', tom, DAY, '10:40', db) // signed in again by hand
+    await expect(undoSignOut(v.id, db)).rejects.toThrow(/already back on site/)
   })
 })
