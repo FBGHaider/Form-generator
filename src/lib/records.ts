@@ -1,5 +1,5 @@
 import { db as defaultDb, type Car, type CarDetails, type RecordsDb, type Visit } from './db'
-import { isValidTime, normaliseReg } from './format'
+import { isValidTime, normaliseReg, printTime } from './format'
 
 function clean(d: CarDetails): CarDetails {
   return {
@@ -86,6 +86,22 @@ export async function signIn(
 export async function signOut(id: number, timeOut: string, db: RecordsDb = defaultDb): Promise<void> {
   requireTime(timeOut)
   await db.visits.update(id, { timeOut, autoOut: false })
+}
+
+/**
+ * Undo a sign-out: the car is back on site with its original time in — for
+ * someone who went out on a break and came back. Refused if the same car has
+ * already been signed in again since, so it is never on site twice.
+ */
+export async function undoSignOut(id: number, db: RecordsDb = defaultDb): Promise<void> {
+  await db.transaction('rw', db.visits, async () => {
+    const v = await db.visits.get(id)
+    if (!v) throw new Error('That entry no longer exists')
+    if (v.timeOut === '') return
+    const again = await db.visits.where('day').equals(v.day).filter((o) => o.reg === v.reg && o.timeOut === '').first()
+    if (again) throw new Error(`${v.reg} is already back on site (signed in at ${printTime(again.timeIn)})`)
+    await db.visits.update(id, { timeOut: '', autoOut: false })
+  })
 }
 
 /** Sign out every car still on site that day. Returns how many were signed out. */

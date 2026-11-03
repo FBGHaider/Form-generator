@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { db, type CarDetails } from '../lib/db'
 import { dayKey, displayName, orUnknown, printTime, timeNow } from '../lib/format'
-import { deleteVisit, endOfDayFor, signOut, updateVisit } from '../lib/records'
+import { deleteVisit, endOfDayFor, signOut, undoSignOut, updateVisit } from '../lib/records'
 import { DetailsFields } from './DetailsFields'
 import { MissingName } from './MissingName'
 import { Sheet } from './Sheet'
@@ -87,6 +87,12 @@ export function VisitSheet({ id, onClose, onDone }: { id: number; onClose: () =>
           void run(() => signOut(id, t), `${visit.reg} signed out at ${printTime(t)}`)
         }}>
           {isPast ? `Sign out at ${endOfDayFor(visit.day)}` : 'Time out now'}
+        </button>
+      )}
+      {!onSite && !isPast && (
+        <button type="button" className="btn primary block huge" onClick={() =>
+          void run(() => undoSignOut(id), `${visit.reg} is back on site`)}>
+          Undo sign out — back on site
         </button>
       )}
       <button type="button" className="btn block" onClick={startEdit}>Edit / change times</button>

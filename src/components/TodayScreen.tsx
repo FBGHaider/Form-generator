@@ -118,7 +118,7 @@ export function TodayScreen({ day, today, onDay, onOpen, onSignIn, onSignOut, on
 
       <div className="in-out">
         <button type="button" className="btn primary" onClick={onSignIn}>+ Sign in</button>
-        <button type="button" className="btn out" onClick={onSignOut} disabled={allOnSite === 0}>Sign out</button>
+        <button type="button" className="btn out" onClick={onSignOut} disabled={visits.length === 0}>Sign out</button>
       </div>
 
       <Clearable value={q} onClear={() => setQ('')} className="screen-search">
