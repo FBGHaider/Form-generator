@@ -57,3 +57,12 @@ export function longDay(key: string): string {
 export function fileDay(key: string): string {
   return longDay(key).replace(/ /g, '_')
 }
+
+/** The Monday of the week `day` falls in, as a day key. Weeks run Monday to Sunday. */
+export function weekStart(day: string): string {
+  const [y, m, d] = day.split('-').map(Number)
+  const date = new Date(y, m - 1, d)
+  const back = (date.getDay() + 6) % 7 // Monday 0 … Sunday 6
+  date.setDate(date.getDate() - back)
+  return dayKey(date)
+}

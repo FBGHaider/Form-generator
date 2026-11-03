@@ -42,7 +42,7 @@ h1 { font-size: 26px; margin: 0; }
 h2 { font-size: 15px; margin: 0; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
 
 .app { min-height: 100dvh; padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
-.screen { padding: calc(14px + env(safe-area-inset-top)) 16px 100px; max-width: 640px; margin: 0 auto; }
+.screen { padding: calc(14px + env(safe-area-inset-top)) 16px 150px; max-width: 640px; margin: 0 auto; }
 .screen-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
 .muted { color: var(--muted); font-size: 14px; }
 .hint { color: var(--muted); font-size: 14px; margin: 6px 0 14px; }
@@ -144,7 +144,7 @@ section { margin-top: 18px; }
 .install-hint { display: flex; gap: 10px; align-items: flex-start; background: var(--warn-bg); padding: calc(10px + env(safe-area-inset-top)) 16px 10px; font-size: 14px; }
 
 .toast {
-  position: fixed; left: 16px; right: 16px; bottom: calc(90px + env(safe-area-inset-bottom)); z-index: 20;
+  position: fixed; left: 16px; right: 16px; bottom: calc(150px + env(safe-area-inset-bottom)); z-index: 20;
   max-width: 600px; margin: 0 auto; padding: 12px 16px; border-radius: var(--radius);
   background: #15181d; color: #fff; font-weight: 600; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
@@ -163,3 +163,15 @@ section { margin-top: 18px; }
 .btn.danger-solid { background: var(--danger); border-color: var(--danger); color: #fff; align-self: flex-start; }
 .end-of-day { margin-top: 4px; }
 .backup h2, section > h2 { margin-bottom: 8px; }
+
+.pick { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; padding: 4px 0; cursor: pointer; }
+.pick input { width: 24px; height: 24px; accent-color: var(--brand); flex: none; }
+.day-row.picked { background: var(--accent); }
+.share-bar {
+  position: fixed; left: 0; right: 0; bottom: calc(52px + env(safe-area-inset-bottom)); z-index: 6;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 16px; background: var(--card); border-top: 1px solid var(--line);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+}
+.share-bar .btn { padding: 12px 18px; }
+.link:disabled { opacity: 0.4; }
