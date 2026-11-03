@@ -9,7 +9,8 @@ import { Sheet } from './Sheet'
 import { errorText, useToast } from './Toast'
 
 /** One row of the day: sign it out, correct it, or remove it. */
-export function VisitSheet({ id, onClose }: { id: number; onClose: () => void }) {
+/** `onDone` is called after something was changed (signed out, edited, removed). */
+export function VisitSheet({ id, onClose, onDone }: { id: number; onClose: () => void; onDone?: () => void }) {
   const notify = useToast()
   const visit = useLiveQuery(() => db.visits.get(id), [id])
   const [editing, setEditing] = useState(false)
@@ -21,6 +22,7 @@ export function VisitSheet({ id, onClose }: { id: number; onClose: () => void })
     try {
       await fn()
       notify(done)
+      onDone?.()
       onClose()
     } catch (e) {
       notify(errorText(e), 'error')

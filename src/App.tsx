@@ -50,12 +50,15 @@ export function App() {
   const [openId, setOpenId] = useState<number | null>(null)
   const [everyoneOut, setEveryoneOut] = useState<number | null>(null)
   const [importing, setImporting] = useState(false)
+  // Bumped after a car is signed in or out, to empty the Today search box.
+  const [clearSearch, setClearSearch] = useState(0)
+  const searchDone = () => setClearSearch((n) => n + 1)
 
   return (
     <div className="app">
       <InstallHint />
       {tab === 'today' && (
-        <TodayScreen day={day} onOpen={(v) => setOpenId(v.id)} onEveryoneOut={setEveryoneOut} onImport={() => setImporting(true)} />
+        <TodayScreen day={day} onOpen={(v) => setOpenId(v.id)} onEveryoneOut={setEveryoneOut} onImport={() => setImporting(true)} clearSearch={clearSearch} />
       )}
       {tab === 'master' && <MasterScreen day={day} />}
       {tab === 'history' && <HistoryScreen />}
@@ -77,9 +80,10 @@ export function App() {
           day={day}
           onClose={() => setSigningIn(false)}
           onOpenVisit={(v) => { setSigningIn(false); setOpenId(v.id) }}
+          onDone={searchDone}
         />
       )}
-      {openId !== null && <VisitSheet id={openId} onClose={() => setOpenId(null)} />}
+      {openId !== null && <VisitSheet id={openId} onClose={() => setOpenId(null)} onDone={searchDone} />}
       {importing && <ImportDaySheet today={day} onClose={() => setImporting(false)} />}
       {everyoneOut !== null && <EveryoneOutSheet day={day} count={everyoneOut} onClose={() => setEveryoneOut(null)} />}
     </div>

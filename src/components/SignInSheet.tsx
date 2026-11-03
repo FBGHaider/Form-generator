@@ -14,10 +14,12 @@ const fromCar = (c: Car): CarDetails => ({
   firstName: c.firstName, lastName: c.lastName, company: c.company, toSee: c.toSee || TO_SEE_OPTIONS[0],
 })
 
-export function SignInSheet({ day, onClose, onOpenVisit }: {
+export function SignInSheet({ day, onClose, onOpenVisit, onDone }: {
   day: string
   onClose: () => void
   onOpenVisit: (v: Visit) => void
+  /** Called after a car was signed in. */
+  onDone?: () => void
 }) {
   const notify = useToast()
   const [regText, setRegText] = useState('')
@@ -80,6 +82,7 @@ export function SignInSheet({ day, onClose, onOpenVisit }: {
     try {
       await signIn(reg, details, day, timeIn)
       notify(`${reg} signed in at ${printTime(timeIn)}${isNew ? ' — added to master list' : ''}`)
+      onDone?.()
       onClose()
     } catch (e) {
       notify(errorText(e), 'error')

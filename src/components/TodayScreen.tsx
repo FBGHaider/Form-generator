@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { db, type Visit } from '../lib/db'
 import { displayName, longDay, normaliseReg, orUnknown, printTime } from '../lib/format'
 import { visitsFor } from '../lib/records'
@@ -32,14 +32,17 @@ function Row({ v, onOpen }: { v: Visit; onOpen: (v: Visit) => void }) {
   )
 }
 
-export function TodayScreen({ day, onOpen, onEveryoneOut, onImport }: {
+export function TodayScreen({ day, onOpen, onEveryoneOut, onImport, clearSearch }: {
   day: string
   onOpen: (v: Visit) => void
   onEveryoneOut: (count: number) => void
   onImport: () => void
+  /** Changes whenever the search box should be emptied (after signing a car in or out). */
+  clearSearch: number
 }) {
   const notify = useToast()
   const [q, setQ] = useState('')
+  useEffect(() => setQ(''), [clearSearch])
   const [showOut, setShowOut] = useState(false)
   const visits = useLiveQuery(() => db.visits.where('day').equals(day).sortBy('createdAt'), [day]) ?? []
 
