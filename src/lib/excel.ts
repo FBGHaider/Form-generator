@@ -1,6 +1,6 @@
 import readXlsxFile from 'read-excel-file/browser'
 import writeXlsxFile from 'write-excel-file/browser'
-import { masterRows, mergeSheets, parseMasterRows, type MasterParseResult } from './master'
+import { masterRows, mergeSheets, parseMasterRows, sheetsToRead, type MasterParseResult } from './master'
 import type { Car } from './db'
 
 export interface MasterFileResult {
@@ -14,12 +14,14 @@ export interface MasterFileResult {
 }
 
 /**
- * Read a master list from an .xlsx file. Every sheet with a "Registration"
- * heading is read — the workbook is one sheet per day — and they are combined,
- * newest sheet winning, so cars seen on any day are all in the master list.
+ * Read a master list from an .xlsx file. If the workbook has a sheet called
+ * "Master", only that sheet is read. Otherwise every sheet with a
+ * "Registration" heading is read — the workbook is one sheet per day — and
+ * they are combined, newest sheet winning, so cars seen on any day are all in
+ * the master list.
  */
 export async function readMasterFile(file: File): Promise<MasterFileResult> {
-  const all = await readXlsxFile(file)
+  const all = sheetsToRead(await readXlsxFile(file))
   const parsed: MasterParseResult[] = []
   const sheets: string[] = []
   const ignored: string[] = []

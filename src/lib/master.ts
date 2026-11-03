@@ -94,6 +94,16 @@ export function parseMasterRows(rows: unknown[][]): MasterParseResult {
   return { cars: [...byReg.values()], columns, skipped, duplicates: [...duplicates] }
 }
 
+/**
+ * Which sheets of a workbook to read. A sheet called "Master" is the master
+ * list on its own — the other sheets beside it are notes — so it is the only
+ * one read. Otherwise every sheet is read (the workbook is one sheet per day).
+ */
+export function sheetsToRead<S extends { sheet: string }>(sheets: S[]): S[] {
+  const master = sheets.filter((s) => s.sheet.trim().toLowerCase() === 'master')
+  return master.length > 0 ? master : sheets
+}
+
 type ImportedCar = Omit<Car, 'updatedAt'>
 const DETAILS = ['firstName', 'lastName', 'company', 'toSee'] as const
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { RecordsDb } from './db'
-import { importCars, looksLikeReg, masterRows, mergeSheets, parseMasterRows } from './master'
+import { importCars, looksLikeReg, masterRows, mergeSheets, parseMasterRows, sheetsToRead } from './master'
 
 describe('master list import', () => {
   it('reads the columns described for the master sheet', () => {
@@ -72,6 +72,23 @@ describe('master list import', () => {
     expect(merged.find((c) => c.reg === 'FN24OET')).toMatchObject({ firstName: 'Tom', lastName: 'Brown' })
     // Blank last name on 3 Nov does not wipe out "Fitzpatrick" from 2 Nov.
     expect(merged.find((c) => c.reg === 'K23ADH')).toMatchObject({ firstName: 'Thomas', lastName: 'Fitzpatrick' })
+  })
+
+  it('reads only the "Master" sheet when there is one', () => {
+    const book = [{ sheet: 'Master' }, { sheet: 'Check these' }, { sheet: 'Changes made' }]
+    expect(sheetsToRead(book).map((s) => s.sheet)).toEqual(['Master'])
+    const daily = [{ sheet: '20 Oct 2026' }, { sheet: '21 Oct 2026' }]
+    expect(sheetsToRead(daily)).toEqual(daily)
+  })
+
+  it('ignores extra columns such as Days seen and Last seen', () => {
+    const rows = [
+      ['Registration', 'First name', 'Last name', 'Company', 'To see', 'Days seen', 'Last seen'],
+      ['DN75WAE', 'Tom', 'Ankrett', 'Spencer', 'Spencer', 24, '3 Nov 2026'],
+    ]
+    expect(parseMasterRows(rows).cars).toEqual([
+      { reg: 'DN75WAE', firstName: 'Tom', lastName: 'Ankrett', company: 'Spencer', toSee: 'Spencer' },
+    ])
   })
 
   it('explains when there is no registration column', () => {
